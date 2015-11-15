@@ -5,48 +5,89 @@
  *  License: NULL
  */
 
+/**
+ *  Imports
+ */
+@import "../css/reset";
+
+/**
+ *  Variables
+ */
+$font-family: "Roboto", sans-serif;
+$font-code: "Hack", "Courier New", Courier, monospace;
+
+$color-white: #ffffff;
+$color-black: #000000;
+$color-lightgray: #cccccc;
+
+$width-container: 1024px;
+
+/**
+ *  Extends
+ */
+.border-radius {
+  border-radius: 10px 10px 10px 10px;
+  -moz-border-radius: 10px 10px 10px 10px;
+  -webkit-border-radius: 10px 10px 10px 10px;
+}
+
 html, body {
   height: 100%;
-  font-family: "Roboto", sans-serif;
+  font-family: $font-family;
   font-size: 16px;
   font-weight: 400;
 }
 
 h1 {
   font-size: 36px;
+
+  .title {
+    display: table;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid $color-lightgray;
+  }
 }
 
 .mainTable {
   width: 100%;
+
+  tbody td {
+    width: 50%;
+    padding: 5px 10px 30px 0;
+  }
+
+  tbody td:first-child {
+    border-right: 1px solid $color-lightgray;
+  }
+
+  tbody td:last-child {
+    width: 50%;
+    padding: 5px 10px;
+    border-right: none;
+  }
 }
 
-.mainTable > tbody td {
-  width: 50%;
-  padding: 5px 10px 30px 0;
-}
-
-.mainTable > tbody td:first-child {
-  border-right: 1px solid #cccccc;
-}
-
-.mainTable > tbody td:last-child {
-  width: 50%;
-  padding: 5px 10px;
-  border-right: none;
+.mainList {
+  padding: 5px 0px 0px 5px;
+  
+  li:before {
+    content: "\2612";
+  }
 }
 
 .optionTable {
   width: 100%;
-}
-  
-.optionTable > tbody td {
-  vertical-align: middle;
-  padding: 5px 10px;
-  border: 1px solid #cccccc !important;
-  border-collapse: collapse;
+
+  tbody td {
+    vertical-align: middle;
+    padding: 5px 10px;
+    border: 1px solid $color-lightgray !important;
+    border-collapse: collapse;
+  }
 }
 
-.pad {
+.noPadLeft {
   padding-left: 0 !important;
 }
 
@@ -60,20 +101,13 @@ h1 {
   top: 0;
   left: 0;
   width: 100%;
-  background-color: #ffffff;
+  background-color: $color-white;
   text-align: center;
-  border-bottom: 2px solid #000000;
+  border-bottom: 2px solid $color-black;
 }
 
 .mainTitle {
   margin-top: 15px;
-}
-
-h1.title {
-  display: table;
-  padding-bottom: 5px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid #cccccc;
 }
 
 div.title {
@@ -84,65 +118,65 @@ div.title {
 
 .download {
   margin: 15px;
-}
 
-.download a {
-  text-decoration: none;
-}
+  a {
+    text-decoration: none;
+  }
 
-.download a:hover {
-  color: #00cc00;
+  a:hover {
+    color: #00cc00;
+  }
 }
 
 .content {
-  width: 1024px;
+  width: $width-container;
   margin: 40px auto;
 }
 
 .footer {
-  color: #eeeeee;
-}
-
-.code {
-  background-color: #eeeeee;
-}
-
-.code .language {
-  display: block;
-  padding: 5px 10px;
-  font-size: 20px;
-  font-weight: 800;
-  border-bottom: 2px solid #000000;
+  border-top: 1px solid $color-lightgray;
+  padding: 10px 0px;
 }
 
 .snippet {
-  font-family: "Courier New", Courier, monospace;
   background-color: #dddddd;
 }
 
-.code .snippet {
-  padding: 5px 10px;
-  cursor: copy;
-  font-size: 16px;
-  line-height: 16px;
-  min-height: 40px;
-  cursor: copy;
-}
+.code {
+  font-family: $font-code;
 
-.code button.runButton {
-  cursor: pointer;
-  display: inline-block;
-  margin-right: 10px;
-  background-color: #ffffff;
-  float: right;
-  padding: 2px 5px;
-  border-radius: 10px 10px 10px 10px;
-  -moz-border-radius: 10px 10px 10px 10px;
-  -webkit-border-radius: 10px 10px 10px 10px;
-  border: 1px solid #000000;
-}
+  .languag00e {
+    background-color: #eeeeee;
+    display: block;
+    padding: 5px 10px;
+    font-size: 20px;
+    font-weight: 800;
+    border-bottom: 2px solid $color-black;
+  }
 
-.code button.runButton:hover {
-  background-color: #cccccc;
-  color: #cc0000;
+  .snippet {
+    padding: 5px 10px;
+    cursor: copy;
+    font-size: 16px;
+    line-height: 16px;
+    min-height: 40px;
+    cursor: copy;
+  }
+
+  button.runButton {
+    cursor: pointer;
+    display: inline-block;
+    margin-right: 10px;
+    background-color: $color-white;
+    float: right;
+    padding: 2px 5px;
+
+    @extend .border-radius;
+    border: 1px solid $color-black;
+  }
+
+  button.runButton:hover {
+    background-color: $color-lightgray;
+    color: #cc0000;
+  }
 }

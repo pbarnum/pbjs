@@ -52,8 +52,8 @@ gulp.task('watch', function() {
 });
 
 // The default task (called when you run `gulp` from cli)
-gulp.task('watch', [
-  //'watch',
+gulp.task('default', [
+  'watch',
   'combine-js',
   'combine-sass',
   'compile-js',
