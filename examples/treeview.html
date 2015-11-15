@@ -1,0 +1,254 @@
+<html>
+<head>
+  <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+  <title>Testing</title>
+
+  <link rel="stylesheet" type="text/css" href="/reset.css"/> <!-- Reset for all browsers -->
+  <link rel="stylesheet" type="text/css" href="/css/pbTree.css"/> <!-- Treeview -->
+  <style>
+    html, body {
+      height: 100%;
+      background-color: #eeeeee;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 32px;
+    }
+
+    #pageWrapper {
+      position: relative;
+      padding: 10px;
+      width: 80%;
+      height: 100%;
+      margin: 0 auto;
+      border: 1px solid black;
+      background-color: #ffffff;
+    }
+
+    #wrap-pbTree {
+      width: 80%;
+      margin: 0 auto;
+      height: 500px;
+      border: 1px solid green;
+      background-color: #ffffff;
+    }
+
+    #treeWrapper {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      height: 100%;
+      left: 0;
+      overflow: scroll;
+      white-space: nowrap;
+      z-index: 1002;
+      background-color: #ffffff;
+    }
+
+    #treeSearch {
+      position: relative;
+      display: inline-block;
+      margin-left: 153px;
+      width: 200px;
+      height: 24px;
+    }
+  </style>
+
+  <script type="text/javascript" src="pbTree/pbTree.js"></script>
+
+</head>
+
+<body>
+  <div id="pageWrapper">
+    <div>
+      <input id="treeSearch" type="text" />
+    </div>
+    <br />
+    <div id="wrap-pbTree">
+      <div id="container">
+        <ul>
+          <li class="tab1">tab1</li>
+          <li class="tab2">tab2</li>
+          <li class="tab3">tab3
+            <ul>
+              <li class="tab3a">tab3a</li>
+              <li class="tab3b">tab3b
+                <ul>
+                  <li class="tab3b1">tab3b1
+                    <ul>
+                      <li><a href="#">This is a link</a></li>
+                      <li><a href="#">This is a link</a></li>
+                      <li><a href="#">This is a link</a></li>
+                      <li><a href="#">This is a link</a></li>
+                      <li><a href="#">This is a link</a></li>
+                    </ul>
+                  </li>
+                  <li class="tab3b2">tab3b2</li>
+                </ul>
+              </li>
+              <li class="tab3c">tab3c</li>
+            </ul>
+          </li>
+          <li class="tab4">tab4</li>
+          <li class="tab5">tab5</li>
+          <li class="tab6">tab6
+            <ul>
+              <li class="tab6a">tab6a
+                <ul>
+                  <li class="tab6a1">tab6a1
+                    <ul>
+                      <li class="tab6a1a">tab6a1a
+                        <ul>
+                          <li class="tab6a1a1">tab6a1a1
+                            <ul>
+                              <li class="tab6a1a1a"><a href="#">This is a link</a></li>
+                              <li class="tab6a1a1b"><a href="#">This is a link</a></li>
+                            </ul>
+                          </li>
+                          <li class="tab6b">tab6b</li>
+                        </ul>
+                      </li>
+                      <li class="tab6b">tab6b</li>
+                    </ul>
+                  </li>
+                  <li class="tab6b">tab6b</li>
+                </ul>
+               </li>
+              <li class="tab6b">tab6b</li>
+            </ul>
+          </li>
+          <li class="tab7">tab7</li>
+          <li class="tab8">tab8</li>
+          <li class="tab9">tab4</li>
+          <li class="tab10">tab10</li>
+          <li class="tab11">tab11
+            <ul>
+              <li class="tab11a">tab11a</li>
+              <li class="tab11b">tab11b</li>
+            </ul>
+          </li>
+          <li class="tab12"><a href="#">This is a link</a></li>
+          <li class="tab13"><a href="#">This is a link</a></li>
+          <li class="tab14"><a href="#">This is a link</a></li>
+          <li class="tab15"><a href="#">This is a link</a></li>
+          <li class="tab16">tab16
+            <ul>
+              <li class="tab16a">tab16a</li>
+              <li class="tab16b">tab16b</li>
+            </ul>
+          </li>
+          <li class="tab17">tab17</li>
+          <li class="tab18">tab18</li>
+          <li class="tab20"><a href="#">This is a link</a></li>
+          <li class="tab21"><a href="#">This is a link</a></li>
+          <li class="tab22">tab22
+            <ul>
+              <li class="tab22a">tab22a</li>
+              <li class="tab22b">tab22b</li>
+            </ul>
+          </li>
+          <li class="tab23">tab23</li>
+          <li class="tab24">tab24</li>
+          <li class="tab25">tab25</li>
+          <li class="tab26">tab26</li>
+          <li class="tab27">tab27
+            <ul>
+              <li class="tab27a">tab27a</li>
+              <li class="tab27b">tab27b</li>
+            </ul>
+          </li>
+          <li class="tab28">tab28</li>
+          <li class="tab29">tab29</li>
+          <li class="tab30">tab30</li>
+          <li class="tab31">tab31</li>
+          <li class="tab32">tab32
+            <ul>
+              <li class="tab32a">tab32a</li>
+              <li class="tab32b">tab32b</li>
+            </ul>
+          </li>
+          <li class="tab33"><a href="#">This is a link</a></li>
+          <li class="tab34"><a href="#">This is a link</a></li>
+          <li class="tab35">tab35</li>
+          <li class="tab36">tab36</li>
+          <li class="tab37">tab37
+            <ul>
+              <li class="tab37a">tab37a</li>
+              <li class="tab37b">tab37b</li>
+            </ul>
+          </li>
+          <li class="tab38">tab38</li>
+          <li class="tab39">tab39</li>
+          <li class="tab40">tab40</li>
+          <li class="tab41">tab41</li>
+          <li class="tab42">tab42
+            <ul>
+              <li class="tab42a">tab42a</li>
+              <li class="tab42b">tab42b</li>
+            </ul>
+          </li>
+          <li class="tab43"><a href="#">This is a link</a></li>
+          <li class="tab44"><a href="#">This is a link</a></li>
+          <li class="tab45"><a href="#">This is a link</a></li>
+          <li class="tab46"><a href="#">This is a link</a></li>
+          <li class="tab47">tab47
+            <ul>
+              <li class="tab48a">tab48a</li>
+              <li class="tab48b">tab48b</li>
+            </ul>
+          </li>
+          <li class="tab49">tab49</li>
+          <li class="tab50">tab50</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+
+<footer>
+  <script>
+    var container = document.getElementById("container");
+    var treeOptions = {
+      showall: false,
+
+      // "Expand/Collapse" all nodes
+      ecButtons: { enable: true },
+
+      // Indicate that the node has a child
+      showoccupied: { enable: true },
+
+      // Add a tooltip to hover above the mouse
+      tooltip: {
+        enable: true,
+        offsetX: 10,
+        offsetY: 10
+      },
+
+      // Add a hover indicator
+      hover: {
+        enable: true
+      },
+
+      search: {
+        enable: true,
+        selector: '#treeSearch',
+        callback: function(results, count, total) {
+          console.log(results);
+          console.log(count);
+          console.log(total);
+        }
+      },
+
+      // Add a selected indicator
+      select: {
+        enable: true
+      }
+    };
+
+    var treeview = new pbTree(container);
+  </script>
+</footer>
+
+</html>
