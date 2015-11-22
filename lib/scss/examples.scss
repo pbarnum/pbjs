@@ -14,7 +14,7 @@
  *  Variables
  */
 $font-family: "Roboto", sans-serif;
-$font-code: "Hack", "Courier New", Courier, monospace;
+$font-code: "Courier New", Courier, monospace;
 
 $color-white: #ffffff;
 $color-black: #000000;
@@ -145,7 +145,7 @@ div.title {
 .code {
   font-family: $font-code;
 
-  .languag00e {
+  .language {
     background-color: #eeeeee;
     display: block;
     padding: 5px 10px;
@@ -157,7 +157,7 @@ div.title {
   .snippet {
     padding: 5px 10px;
     cursor: copy;
-    font-size: 16px;
+    font-size: 14px;
     line-height: 16px;
     min-height: 40px;
     cursor: copy;

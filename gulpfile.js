@@ -1,6 +1,6 @@
 var gulp = require('gulp');
 var concat = require('gulp-concat');
-var uglify = require('gulp-uglify');
+var babel = require('gulp-babel');
 var sass = require('gulp-sass');
 var rename = require('gulp-rename');
  
@@ -12,7 +12,7 @@ var paths = {
 // combine source files into one
 gulp.task('combine-js', function() {
   return gulp.src(paths.js)
-    .pipe(concat('pbjs.js'))
+    //.pipe(concat('pbjs.js'))
     .pipe(gulp.dest('src/js'));
 });
 
@@ -26,7 +26,7 @@ gulp.task('combine-sass', function() {
 // minify source files into one
 gulp.task('compile-js', function() {
   return gulp.src(paths.js)
-    .pipe(uglify())
+    .pipe(babel())
     .pipe(concat('pbjs.min.js'))
     .pipe(gulp.dest('src/js/minified'));
 });
@@ -53,7 +53,7 @@ gulp.task('watch', function() {
 
 // The default task (called when you run `gulp` from cli)
 gulp.task('default', [
-  'watch',
+  //'watch',
   'combine-js',
   'combine-sass',
   'compile-js',

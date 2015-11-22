@@ -5,26 +5,150 @@
  *  Creates manipulative pop up boxes.
  */
 
-(function(pbjs) {
+(function (pbjs) {
   
   /**
    *  Private variables
    */
-  var manager;
-  var instance;
-  var current;
-  var boxes;
+  var _manager;
+  var _instance;
+  var _current;
+  
+  /**
+   *  Private methods
+   */
+   
+  /**
+   *  Returns the Box manager
+   */
+  function getManager() {
+    return _manager;
+  };
+   
+  /**
+   *  Returns the current Box
+   */
+  function getCurrent() {
+    return _current;
+  };
+   
+  /**
+   *  Sets the current Box
+   */
+  function setCurrent(current) {
+    _current = current;
+  };
   
   /**
    *  Constructor
    */
   pbjs.box = function(options) {
     // Singleton
-    if (boxes.constructor === Array) {
-      return this.create(options);
+    if (_instance) {
+      return _instance;
     }
+    _instance = this;
 
-    boxes = [];
+    // Initialize global variables
+    _manager = {
+      boxes: [],
+
+      /**
+       *  Returns a new id
+       *  @return  int     id
+       */
+      nextId: function() {
+        var id = 1;
+        if (this.boxes.length <= 0) {
+          return id;
+        } else {
+          for (var i in this.boxes) {
+            if (this.boxes[i].id > id) {
+              id = this.boxes[id].id;
+            }
+          }
+          return id + 1;
+        }
+      },
+
+      /**
+       *  Get a box by its id
+       *  @param   int     id
+       *  @return  Object  The box
+       */
+      getBoxById: function(id) {
+        for (var i in this.boxes) {
+          if (this.boxes[i].id == id) {
+            return this.boxes[i];
+          }
+        }
+        return null;
+      },
+
+      /**
+       *  Sets the id of the current box
+       *  @param   int     id
+       */
+      setCurrent: function(id) {
+        if (this.boxes.length <= 0) {
+          this.current = null;
+        }
+        var box = this.getBoxById(id);
+        if (box) {
+          this.current = box.id;
+        } else {
+          this.current = this.boxes[this.boxes.length - 1].id;
+        }
+      },
+
+      /**
+       *  Adds the box to the current set of boxes and adds
+       *  its element to the DOM
+       */
+      addBox: function(box) {
+        this.boxes.push(box);
+        this.setCurrent(box.id);
+        document.body.appendChild(box.element);
+      },
+
+      /**
+       *  Removes a box from the manager and the DOM using its id
+       *  @param   int     The box id
+       */
+      removeBox: function(id) {
+        // Loop through all boxes
+        var box = this.getBoxById(id);
+
+        // Remove the box from the DOM
+        box.element.parentNode.removeChild(box.element);
+
+        // Set the new current box
+        this.setCurrent(/*box.parent*/);
+
+        // Remove the box
+        this.boxes.splice(this.boxes.indexOf(box), 1);
+      },
+
+      /**
+       *  Find the DOM's highest z-index and return it plus 1
+       *  @return  int     Highest z-index plus 1
+       */
+      findZIndex: function() {
+        var highestZ = 100;
+        var elements = document.getElementsByTagName('*');
+        if (!elements.length) {
+          return highestZ;
+        }
+        for (var i = 0; i < elements.length; ++i) {
+          var z = parseInt(elements[i].style.zIndex);
+          if (z > highestZ) {
+            highestZ = z;
+          }
+        }
+        return highestZ + 1;
+      }
+    };
+
 
     this.undefined = 'undefined';
     this.CLASSES = {
@@ -328,123 +452,5 @@
       this.getManager().removeBox(box.id);
     }
   };
-   
-  /**
-   *  Returns the Box manager
-   */
-  function getManager() {
-    return _manager;
-  }
-   
-  /**
-   *  Returns the current Box
-   */
-  function getCurrent() {
-    return _current;
-  }
-   
-  /**
-   *  Sets the current Box
-   */
-  function setCurrent(current) {
-    _current = current;
-  }
-  
-  /**
-   *  Returns a new id
-   *  @return  int     id
-   */
-  function nextId() {
-    var id = 1;
-    if (_manager.boxes.length <= 0) {
-      return id;
-    } else {
-      var i;
-      for (i = 0; i < _manager.boxes.length; ++i) {
-        if (_manager.boxes[i].id > id) {
-          id = _manager.boxes[id].id;
-        }
-      }
-      return id + 1;
-    }
-  }
-
-  /**
-   *  Get a box by its id
-   *  @param   int     id
-   *  @return  Object  The box
-   */
-  function getBoxById(id) {
-    var i;
-    for (i = 0; i < _manager.boxes.length; ++i) {
-      if (_manager.boxes[i].id == id) {
-        return _manager.boxes[i];
-      }
-    }
-    return null;
-  }
-
-  /**
-   *  Sets the id of the current box
-   *  @param   int     id
-   */
-  function setCurrent(id) {
-    if (this.boxes.length <= 0) {
-      this.current = null;
-    }
-    var box = this.getBoxById(id);
-    if (box) {
-      this.current = box.id;
-    } else {
-      this.current = this.boxes[this.boxes.length - 1].id;
-    }
-  }
-
-  /**
-   *  Adds the box to the current set of boxes and adds
-   *  its element to the DOM
-   */
-  function addBox(box) {
-    this.boxes.push(box);
-    this.setCurrent(box.id);
-    document.body.appendChild(box.element);
-  }
-
-  /**
-   *  Removes a box from the manager and the DOM using its id
-   *  @param   int     The box id
-   */
-  function removeBox(id) {
-    // Loop through all boxes
-    var box = this.getBoxById(id);
-
-    // Remove the box from the DOM
-    box.element.parentNode.removeChild(box.element);
-
-    // Set the new current box
-    this.setCurrent(/*box.parent*/);
-
-    // Remove the box
-    this.boxes.splice(this.boxes.indexOf(box), 1);
-  }
-
-  /**
-   *  Find the DOM's highest z-index and return it plus 1
-   *  @return  int     Highest z-index plus 1
-   */
-  function findZIndex() {
-    var highestZ = 100;
-    var elements = document.getElementsByTagName('*');
-    if (!elements.length) {
-      return highestZ;
-    }
-    for (var i = 0; i < elements.length; ++i) {
-      var z = parseInt(elements[i].style.zIndex);
-      if (z > highestZ) {
-        highestZ = z;
-      }
-    }
-    return highestZ + 1;
-  }
 
 })(pbjs);

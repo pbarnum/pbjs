@@ -7,26 +7,11 @@
 
 "use strict";
 
-var pbjs = pbjs || {};
+(function(window, document, undefined) {
 
-(function(pbjs, window, document, undefined) {
-
-  pbjs.core = {};
-  pbjs.core.prototype.extend = function (ns, nsString) {
-    var parent = ns;
-    var parts = nsString.split('.');
-    var i;
-    if (parts[0] == "pbjs") {
-      parts = parts.slice(1);
-    }
-    for (i = 0; i < parts.length; ++i) {
-      if (parent[parts[i]] !== undefined) {
-        parent[parts[i]] = {};
-      }
-      parent = parent[parts[i]];
-    }
-    return parent;
-  }
+  // Create the global object
+  window.pbjs = function() {};
+  pbjs.core = function() {};
 
   /**
    *  Helper function for creating DOM elements
@@ -64,5 +49,4 @@ var pbjs = pbjs || {};
     }
   }
 
-  return pbjs;
-})(pbjs, window, document, undefined);
+})(window, document, undefined);
