@@ -1,164 +1,45 @@
 /**
- *  Content Box
- *  Written by Patrick Barnum
- *  
- *  Creates manipulative pop up boxes.
+ *  PB&Js | /pb.box.js
+ *  Author: Patrick Barnum
+ *  Description: Creates a manipulative pop up box.
+ *  License: NULL
  */
 
-(function (pbjs) {
-  
+(function (window) {
+
+  // Is PBJS a valid object?
+  if (!window || !window.pbjs) {
+    throw new Error("PBJS does not exist!");
+  }
+
   /**
    *  Private variables
    */
-  var _manager;
-  var _instance;
-  var _current;
-  
-  /**
-   *  Private methods
-   */
-   
-  /**
-   *  Returns the Box manager
-   */
-  function getManager() {
-    return _manager;
-  };
-   
-  /**
-   *  Returns the current Box
-   */
-  function getCurrent() {
-    return _current;
-  };
-   
-  /**
-   *  Sets the current Box
-   */
-  function setCurrent(current) {
-    _current = current;
-  };
-  
+  var manager;
+  var instance;
+  var current;
+  var boxes;
+
   /**
    *  Constructor
    */
-  pbjs.box = function(options) {
+  pbjs.box = function (options) {
     // Singleton
-    if (_instance) {
-      return _instance;
+    if (boxes.constructor === Array) {
+      return this.create(options);
     }
-    _instance = this;
 
-    // Initialize global variables
-    _manager = {
-      boxes: [],
-
-      /**
-       *  Returns a new id
-       *  @return  int     id
-       */
-      nextId: function() {
-        var id = 1;
-        if (this.boxes.length <= 0) {
-          return id;
-        } else {
-          for (var i in this.boxes) {
-            if (this.boxes[i].id > id) {
-              id = this.boxes[id].id;
-            }
-          }
-          return id + 1;
-        }
-      },
-
-      /**
-       *  Get a box by its id
-       *  @param   int     id
-       *  @return  Object  The box
-       */
-      getBoxById: function(id) {
-        for (var i in this.boxes) {
-          if (this.boxes[i].id == id) {
-            return this.boxes[i];
-          }
-        }
-        return null;
-      },
-
-      /**
-       *  Sets the id of the current box
-       *  @param   int     id
-       */
-      setCurrent: function(id) {
-        if (this.boxes.length <= 0) {
-          this.current = null;
-        }
-        var box = this.getBoxById(id);
-        if (box) {
-          this.current = box.id;
-        } else {
-          this.current = this.boxes[this.boxes.length - 1].id;
-        }
-      },
-
-      /**
-       *  Adds the box to the current set of boxes and adds
-       *  its element to the DOM
-       */
-      addBox: function(box) {
-        this.boxes.push(box);
-        this.setCurrent(box.id);
-        document.body.appendChild(box.element);
-      },
-
-      /**
-       *  Removes a box from the manager and the DOM using its id
-       *  @param   int     The box id
-       */
-      removeBox: function(id) {
-        // Loop through all boxes
-        var box = this.getBoxById(id);
-
-        // Remove the box from the DOM
-        box.element.parentNode.removeChild(box.element);
-
-        // Set the new current box
-        this.setCurrent(/*box.parent*/);
-
-        // Remove the box
-        this.boxes.splice(this.boxes.indexOf(box), 1);
-      },
-
-      /**
-       *  Find the DOM's highest z-index and return it plus 1
-       *  @return  int     Highest z-index plus 1
-       */
-      findZIndex: function() {
-        var highestZ = 100;
-        var elements = document.getElementsByTagName('*');
-        if (!elements.length) {
-          return highestZ;
-        }
-        for (var i = 0; i < elements.length; ++i) {
-          var z = parseInt(elements[i].style.zIndex);
-          if (z > highestZ) {
-            highestZ = z;
-          }
-        }
-        return highestZ + 1;
-      }
-    };
-
+    boxes = [];
 
     this.undefined = 'undefined';
     this.CLASSES = {
-      CONTAINER:  'cBox-container',
-      TITLE_BAR:  'cBox-titleBar',
-      BODY:       'cBox-body',
-      TITLE:      'cBox-title',
-      BUTTON:     'cBox-button',
-      CLOSE:      'cBox-close',
-      RESIZE:     'cBox-resize',
+      CONTAINER: 'cBox-container',
+      TITLE_BAR: 'cBox-titleBar',
+      BODY: 'cBox-body',
+      TITLE: 'cBox-title',
+      BUTTON: 'cBox-button',
+      CLOSE: 'cBox-close',
+      RESIZE: 'cBox-resize',
       ACTION_BAR: 'cBox-actionBar'
     };
 
@@ -168,12 +49,12 @@
     }
 
     return this;
-  }
+  };
 
   /**
    * Creates new box
    */
-  pbjs.box.prototype.create = function(options) {
+  pbjs.box.prototype.create = function (options) {
     // Set the local object variable
     var self = this;
     var existingBoxes = this.getManager().boxes;
@@ -206,19 +87,13 @@
     box.height = options.height;
     box.width = options.width;
     box.element = createElement('div', {
-      'id': 'cBox-'+ box.id,
+      'id': 'cBox-' + box.id,
       'class': this.CLASSES.CONTAINER,
-      'style': [
-        'z-index:'+ (this.getManager().findZIndex()),
-        'height:'+ options.height +'px',
-        'width:'+ options.width +'px',
-        'top:'+ ((window.innerHeight / 2) - (options.height / 2)) +'px',
-        'left:'+ ((window.innerWidth / 2) - (options.width / 2)) +'px'
-      ]
+      'style': ['z-index:' + this.getManager().findZIndex(), 'height:' + options.height + 'px', 'width:' + options.width + 'px', 'top:' + (window.innerHeight / 2 - options.height / 2) + 'px', 'left:' + (window.innerWidth / 2 - options.width / 2) + 'px']
     });
 
     // Set the z-index and current box on element mouse down event
-    box.element.addEventListener('mousedown', function(e) {
+    box.element.addEventListener('mousedown', function (e) {
       var lastBox = self.getCurrent();
       if (lastBox) {
         var swapZ = lastBox.element.style.zIndex;
@@ -236,14 +111,14 @@
       'id': this.CLASSES.TITLE_BAR + '-' + box.id,
       'class': this.CLASSES.TITLE_BAR
     });
-    titleBar.innerHTML = '<span class="' + this.CLASSES.TITLE + '">'+ options.title +'</span>';
+    titleBar.innerHTML = '<span class="' + this.CLASSES.TITLE + '">' + options.title + '</span>';
 
     var onDown = {};
     var onMove = {};
     var onUp = {};
     if (options.isMovable) {
       // Title bar mouse down event
-      onDown = function(e) {
+      onDown = function (e) {
         titleBar.dataset.zIndex = boxElement.style.zIndex;
         titleBar.dataset.diffTop = boxElement.offsetTop - e.clientY;
         titleBar.dataset.diffLeft = boxElement.offsetLeft - e.clientX;
@@ -263,7 +138,7 @@
       };
 
       // Window mouse move event
-      onMove = function(e) {
+      onMove = function (e) {
         if (titleBar.dataset.active !== 'true') {
           return 0;
         }
@@ -289,15 +164,15 @@
           finalLeft = window.innerWidth - boxElement.offsetWidth;
         }
 
-        boxElement.style.top = finalTop +'px';
-        boxElement.style.left = finalLeft +'px';
-      }
+        boxElement.style.top = finalTop + 'px';
+        boxElement.style.left = finalLeft + 'px';
+      };
 
       // Window mouse up event
-      onUp = function(e) {
+      onUp = function (e) {
         boxElement.style.zIndex = Number(titleBar.dataset.zIndex);
         clearDataset(titleBar);
-      }
+      };
     }
 
     // Add the title bar events and append to the box
@@ -323,8 +198,8 @@
       'class': this.CLASSES.BUTTON + ' ' + this.CLASSES.CLOSE,
       'href': 'javascript:void(0);'
     });
-    closeButton.addEventListener('click', function(e) {
-      self.close(); 
+    closeButton.addEventListener('click', function (e) {
+      self.close();
     }, false);
     closeButton.innerHTML = 'Close';
 
@@ -348,7 +223,7 @@
         if (b['class'].constructor === Array) {
           b['class'] = b['class'].join(' ');
         }
-        tmpClass = ' '+ b['class'];
+        tmpClass = ' ' + b['class'];
       }
 
       var a = createElement('a', {
@@ -372,7 +247,7 @@
         'class': this.CLASSES.RESIZE
       });
 
-      resize.addEventListener('mousedown', function(e) {
+      resize.addEventListener('mousedown', function (e) {
         resize.dataset.oHeight = boxElement.offsetHeight;
         resize.dataset.oWidth = boxElement.offsetWidth;
         resize.dataset.initY = e.clientY;
@@ -391,7 +266,7 @@
         return false;
       });
 
-      window.addEventListener('mousemove', function(e) {
+      window.addEventListener('mousemove', function (e) {
         if (resize.dataset.active !== 'true') {
           return 0;
         }
@@ -409,11 +284,11 @@
           finalWidth = 200;
         }
 
-        boxElement.style.height = finalHeight +'px';
-        boxElement.style.width = finalWidth +'px';
+        boxElement.style.height = finalHeight + 'px';
+        boxElement.style.width = finalWidth + 'px';
       });
 
-      window.addEventListener('mouseup', function(e) {
+      window.addEventListener('mouseup', function (e) {
         clearDataset(resize);
       });
 
@@ -433,14 +308,14 @@
    *  Get current box
    *  @return  Object  The current box
    */
-  pbjs.box.prototype.getCurrent = function() {
-    return this.getManager().getBoxById( this.getManager().current );
+  pbjs.box.prototype.getCurrent = function () {
+    return this.getManager().getBoxById(this.getManager().current);
   };
 
   /**
    *  Removes the box from the DOM and the manager.
    */
-  pbjs.box.prototype.close = function() {
+  pbjs.box.prototype.close = function () {
     var box = this.getCurrent();
 
     // Before close callback
@@ -453,4 +328,121 @@
     }
   };
 
-})(pbjs);
+  /**
+   *  Returns the Box manager
+   */
+  function getManager() {
+    return _manager;
+  }
+
+  /**
+   *  Returns the current Box
+   */
+  function getCurrent() {
+    return _current;
+  }
+
+  /**
+   *  Sets the current Box
+   */
+  function setCurrent(current) {
+    _current = current;
+  }
+
+  /**
+   *  Returns a new id
+   *  @return  int     id
+   */
+  function nextId() {
+    var id = 1;
+    if (_manager.boxes.length <= 0) {
+      return id;
+    } else {
+      var i;
+      for (i = 0; i < _manager.boxes.length; ++i) {
+        if (_manager.boxes[i].id > id) {
+          id = _manager.boxes[id].id;
+        }
+      }
+      return id + 1;
+    }
+  }
+
+  /**
+   *  Get a box by its id
+   *  @param   int     id
+   *  @return  Object  The box
+   */
+  function getBoxById(id) {
+    var i;
+    for (i = 0; i < _manager.boxes.length; ++i) {
+      if (_manager.boxes[i].id == id) {
+        return _manager.boxes[i];
+      }
+    }
+    return null;
+  }
+
+  /**
+   *  Sets the id of the current box
+   *  @param   int     id
+   */
+  function setCurrent(id) {
+    if (this.boxes.length <= 0) {
+      this.current = null;
+    }
+    var box = this.getBoxById(id);
+    if (box) {
+      this.current = box.id;
+    } else {
+      this.current = this.boxes[this.boxes.length - 1].id;
+    }
+  }
+
+  /**
+   *  Adds the box to the current set of boxes and adds
+   *  its element to the DOM
+   */
+  function addBox(box) {
+    this.boxes.push(box);
+    this.setCurrent(box.id);
+    document.body.appendChild(box.element);
+  }
+
+  /**
+   *  Removes a box from the manager and the DOM using its id
+   *  @param   int     The box id
+   */
+  function removeBox(id) {
+    // Loop through all boxes
+    var box = this.getBoxById(id);
+
+    // Remove the box from the DOM
+    box.element.parentNode.removeChild(box.element);
+
+    // Set the new current box
+    this.setCurrent();
+
+    // Remove the box
+    /*box.parent*/this.boxes.splice(this.boxes.indexOf(box), 1);
+  }
+
+  /**
+   *  Find the DOM's highest z-index and return it plus 1
+   *  @return  int     Highest z-index plus 1
+   */
+  function findZIndex() {
+    var highestZ = 100;
+    var elements = document.getElementsByTagName('*');
+    if (!elements.length) {
+      return highestZ;
+    }
+    for (var i = 0; i < elements.length; ++i) {
+      var z = parseInt(elements[i].style.zIndex);
+      if (z > highestZ) {
+        highestZ = z;
+      }
+    }
+    return highestZ + 1;
+  }
+})(window);
