@@ -1,5 +1,24 @@
 /**
- *  PB&Js | /_Constructor/pb.core.js
+ *  PB&Js | /src/dev/_Constructor/pbjs.router.js
+ *  Author: Patrick Barnum
+ *  Description: Information control through Modules.
+ *  License: NULL
+ */
+
+//(function(window) {
+//
+//  var MODULE_NAME = "ROUTER";
+//
+//  // Is PBJS a valid object?
+//  if (!window || !window.pbjs) {
+//    throw new Error("PBJS does not exist!");
+//  }
+// 
+//  pbjs.router = func
+// 
+//})(window);
+/**
+ *  PB&Js | /src/dev/_Constructor/pb.core.js
  *  Author: Patrick Barnum
  *  Description: Core functionality and namespace creation for the PB&Js suite
  *  License: NULL
@@ -10,9 +29,9 @@
 (function (window, document, undefined) {
 
   // Create the global object
-  window.pbjs = function () {};
-  pbjs.core = function () {};
-  pbjs.undefined = undefined;
+  window.pbjs = function () {}; // Make pbjs a global object
+  pbjs.core = function () {}; // Initialize the Core object
+  pbjs.undefined = undefined; // Create a globally common 'undefined'
 
   /**
    *  Builds and returns a new pbjsObject id
@@ -57,7 +76,7 @@
   //pbjs.pbjsObject = function(parent) {
   //  this.uniqueId = this.salt();
   //  if (parent && parent) {
-  //   
+  //
   //  }
   //  this.parent = parent || pbjs.undefined;
   //};
@@ -187,14 +206,33 @@
     return false;
   };
 
-  pbjs.error = function (module, reason) {
+  /**
+   *  Error Handler
+   *  @param {string} module    The module the error originated
+   *  @param {string} reason    Human-readable error message
+   *  @param {string} expected  String representation of the expected type
+   *  @param {mixed}  received  The object provided
+   */
+  pbjs.error = function (module, reason, received, expected) {
+    var offense = "";
+    reason = reason || "No reason provided";
+
+    // Check if we have the details
+    if (received && expected) {
+      offense = " Expected '" + expected + "', given '" + received + "'.";
+    } else if (received) {
+      offense = " Given '" + received + "'.";
+    }
+
+    // Tell the user where the error comes from
     if (module && this.isConstructor(module, String)) {
       module = module[0].toUpperCase() + module.slice(1);
     } else {
       module = "(Internal Error)";
     }
-    reason = reason || "No reason provided";
-    throw new Error("PB&Js " + module + ": An error occurred with the following message: " + reason + ".");
+
+    // DANGER!
+    throw new Error("PB&Js " + module + ": An error occurred with the following message: " + reason + "." + offense);
   };
 })(window, document, undefined);
 
@@ -203,38 +241,6 @@ make a xhr class -> html rest class -> form builder
                                     -> get
                                     -> post
 */
-/**
- *  PB&Js | /_Constructor/pbjs.router.js
- *  Author: Patrick Barnum
- *  Description: Information control through Modules.
- *  License: NULL
- */
-
-//(function(window) {
-//
-//  var MODULE_NAME = "ROUTER";
-//
-//  // Is PBJS a valid object?
-//  if (!window || !window.pbjs) {
-//    throw new Error("PBJS does not exist!");
-//  }
-// 
-//  pbjs.router = func
-// 
-//})(window);
-/**
- *  PB&Js | /Connection/pb.connection.js
- *  Author: Patrick Barnum
- *  Description: XMLHttpRequest base class providing an open socket to a server.
- *  License: NULL
- */
-
-"use strict";
-
-// also work on WebSockets
-//(function() {
-// 
-//}();
 /**
  *  PB&Js | /pb.box.js
  *  Author: Patrick Barnum
@@ -723,16 +729,15 @@ make a xhr class -> html rest class -> form builder
 
   // Is PBJS a valid object?
   if (!window || !window.pbjs) {
-    pbjs.error(MODULE_NAME, "PBJS does not exist!");
+    throw new Error("PBJS does not exist!");
   }
 
   // Singleton
-  if (pbjs.trees.constructor === Object) {
+  if (pbjs.trees && pbjs.trees.constructor === Object) {
     return pbjs.trees.createTree(id, options);
   }
 
   // Declare classes
-  var Tree;
   var Node;
 
   /**
@@ -816,37 +821,52 @@ make a xhr class -> html rest class -> form builder
 
   };
 
+  // Declare the Trees object
+  pbjs.trees = function (id) {
+    var container = {};
+    if (id && pbjs.trees.hasTree(id)) {
+      return pbjs.trees.getTree(id);
+    }
+
+    // Trees start with 0 nodes
+    pbjs.trees.length = 0;
+  };
+
   /**
    *  Get all Trees
    *  @description  Checks if the node contains any child Nodes
    *  @return {Boolean} parent
    */
-  pbjs.trees.getAllTrees = function () {
-    return trees;
+  pbjs.trees.prototype.getAllTrees = function () {
+    return pbjs.trees.container;
+  };
+
+  /**
+   *  Is this a Tree?
+   *  @param  {string}  id The id of the Tree object
+   *  @return {bool}
+   */
+  pbjs.trees.prototype.isTree = function (id) {
+    return pbjs.isConstructor(pbjs.trees.leaves[id], pbjs.trees.tree);
   };
 
   /**
    *  New Tree object
-   *  @description   Creates a new Tree object, adding to the Forest
+   *  @description   Creates a new Tree object, adding to the "Forest"
    *  @param  {String}  id  The id of a DOM element
    *  @param  {Object}  options  The new Tree's options
    */
-  pbjs.trees.createTree = pbjs.trees.tree = function (id, options) {
+  pbjs.trees.prototype.createTree = pbjs.trees.tree = function (id, options) {
 
     this.container = document.getElementById(id);
 
     // Id must be present, and is found in the DOM, so we know where to build
-    if (!pbjs.isConstructor(this.container, String)) {
-      pbjs.error("Trees");
-    }
-
-    // Check if this tree exists
-    if (pbjs.trees.hasTree(id)) {
-      return pbjs.trees.getTree(id);
+    if (!pbjs.isDOMElement(this.container)) {
+      pbjs.error(MODULE_NAME, "Could not initiate a new Tree object with the given Id", id);
     }
 
     this.id = id;
-    this.root;
+    this.root = {};
 
     // Define DOM classes
     this.IDs = {
@@ -867,7 +887,7 @@ make a xhr class -> html rest class -> form builder
     _growTree();
 
     // Define all Tree extras
-    this._objects = _getTreeExtras();
+    this.extras = _getTreeExtras();
 
     // Hide the tree until told otherwise
     //this.root.attr('id','pbTree-root').hide();
@@ -1299,9 +1319,13 @@ make a xhr class -> html rest class -> form builder
       elementChildNodes = parentNode.element.childNodes;
       for (i = 0; i < elementChildNodes.length; ++i) {
         node = new Node(parentNode, elementChildNodes[i], pbjs.undefined);
+
+        // We're at the top of a list? Run it again!
         if (node.element.tagName === "ul") {
           _growTreeRecursive(node);
         }
+
+        // Finally, add the node to the parent's children
         parentNode.addChild(node);
       }
     }
@@ -1404,13 +1428,12 @@ make a xhr class -> html rest class -> form builder
    *
    *  These callback methods will expose the functionality of the Tree for the PBJS CommuniKAY module.
    */
-  var myRouter = new pbjs.router.newRouter();
-  myRouter.get = function (callback) {
+  /*var myRouter = new pbjs.router.newRouter();
+  myRouter.get = function(callback) {
     if (!callback || pbjs.isConstructor(callback, Function)) {
       pbjs.error("Get requires a callback function, otherwise, why get the data?");
     }
-  };
-
-  // Final step for the router - register the Module
-  pbjs.registerModule(MODULE_NAME, myRouter);
+    };
+    // Final step for the router - register the Module
+  pbjs.registerModule(MODULE_NAME, myRouter);*/
 })(window);

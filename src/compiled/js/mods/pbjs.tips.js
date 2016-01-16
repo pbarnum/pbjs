@@ -1,0 +1,1 @@
+!function(n){if(!n||!n.pbjs)throw new Error("PBJS does not exist!");pbjs.tips=function(){}}(window);

@@ -1,5 +1,5 @@
 /**
- *  PB&Js | /_Constructor/pb.core.js
+ *  PB&Js | /src/dev/_Constructor/pb.core.js
  *  Author: Patrick Barnum
  *  Description: Core functionality and namespace creation for the PB&Js suite
  *  License: NULL
@@ -10,9 +10,9 @@
 (function(window, document, undefined) {
 
   // Create the global object
-  window.pbjs = function() {};
-  pbjs.core = function() {};
-  pbjs.undefined = undefined;
+  window.pbjs = function() {};  // Make pbjs a global object
+  pbjs.core = function() {};    // Initialize the Core object
+  pbjs.undefined = undefined;   // Create a globally common 'undefined'
 
   /**
    *  Builds and returns a new pbjsObject id
@@ -34,19 +34,19 @@
 
     return str;
   };
-  
+
   pbjs.isType = function(obj, type) {
     return Object.prototype.toString.call(obj).slice(8, -1).toLowerCase() === type;
   };
-  
+
   pbjs.isConstructor = function(obj, type) {
     return obj && obj.constructor === type;
   };
-  
+
   pbjs.isDOMElement = function(element) {
     return element && element.nodeType;
   };
-  
+
   //pbjs.forecasts = function(name, callback, namespace) {
   //  if (!name)
   //};
@@ -57,7 +57,7 @@
   //pbjs.pbjsObject = function(parent) {
   //  this.uniqueId = this.salt();
   //  if (parent && parent) {
-  //    
+  //
   //  }
   //  this.parent = parent || pbjs.undefined;
   //};
@@ -91,7 +91,7 @@
     }
     return original;
   };
-  
+
   /**
    *  Define Array.prototype.indexOf if not already
    *  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
@@ -104,11 +104,11 @@
       }
       var O = Object(this);
       var len = O.length >>> 0;
-      
+
       if (len === 0) {
         return -1;
       }
-      
+
       var n = +fromIndex || 0;
 
       if (Math.abs(n) === Infinity) {
@@ -129,7 +129,7 @@
       return -1;
     };
   }
-  
+
   //var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
   //pbjs.observer = function(callback) {
   //  values = {};
@@ -173,7 +173,7 @@
       delete element.dataset[prop];
     }
   }
-  
+
   pbjs.isVowel = function (character) {
     if (character === this.undefined) {
       return false;
@@ -187,15 +187,34 @@
     }
     return false;
   };
-  
-  pbjs.error = function (module, reason) {
+
+  /**
+   *  Error Handler
+   *  @param {string} module    The module the error originated
+   *  @param {string} reason    Human-readable error message
+   *  @param {string} expected  String representation of the expected type
+   *  @param {mixed}  received  The object provided
+   */
+  pbjs.error = function (module, reason, received, expected) {
+    var offense = "";
+    reason = reason || "No reason provided";
+
+    // Check if we have the details
+    if (received && expected) {
+      offense = " Expected '"+ expected +"', given '"+ received +"'.";
+    } else if (received) {
+      offense = " Given '"+ received +"'.";
+    }
+
+    // Tell the user where the error comes from
     if (module && this.isConstructor(module, String)) {
       module = module[0].toUpperCase() + module.slice(1);
     } else {
       module = "(Internal Error)";
     }
-    reason = reason || "No reason provided";
-    throw new Error("PB&Js "+ module +": An error occurred with the following message: "+ reason +".");
+
+    // DANGER!
+    throw new Error("PB&Js "+ module +": An error occurred with the following message: "+ reason +"."+ offense);
   };
 
 })(window, document, undefined);

@@ -4,59 +4,8 @@
 
   <title>Testing</title>
 
-  <link rel="stylesheet" type="text/css" href="/reset.css"/> <!-- Reset for all browsers -->
-  <link rel="stylesheet" type="text/css" href="/css/pbTree.css"/> <!-- Treeview -->
-  <style>
-    html, body {
-      height: 100%;
-      background-color: #eeeeee;
-      overflow: hidden;
-    }
-
-    h1 {
-      font-size: 32px;
-    }
-
-    #pageWrapper {
-      position: relative;
-      padding: 10px;
-      width: 80%;
-      height: 100%;
-      margin: 0 auto;
-      border: 1px solid black;
-      background-color: #ffffff;
-    }
-
-    #wrap-pbTree {
-      width: 80%;
-      margin: 0 auto;
-      height: 500px;
-      border: 1px solid green;
-      background-color: #ffffff;
-    }
-
-    #treeWrapper {
-      position: relative;
-      display: inline-block;
-      width: 100%;
-      height: 100%;
-      left: 0;
-      overflow: scroll;
-      white-space: nowrap;
-      z-index: 1002;
-      background-color: #ffffff;
-    }
-
-    #treeSearch {
-      position: relative;
-      display: inline-block;
-      margin-left: 153px;
-      width: 200px;
-      height: 24px;
-    }
-  </style>
-
-  <script type="text/javascript" src="pbTree/pbTree.js"></script>
+  <link rel="stylesheet" type="text/css" href="../src/compiled/css/pbjs.trees.css"/> <!-- Treeview -->
+  <script type="text/javascript" src="/src/compiled/js/pbjs.js"></script>
 
 </head>
 
@@ -209,7 +158,7 @@
 
 <footer>
   <script>
-    var container = document.getElementById("container");
+    //var container = document.getElementById("container");
     var treeOptions = {
       showall: false,
 
@@ -247,7 +196,7 @@
       }
     };
 
-    var treeview = new pbTree(container);
+    var treeview = new pbjs.trees.tree("container", treeOptions);
   </script>
 </footer>
 
