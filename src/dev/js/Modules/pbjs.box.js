@@ -29,7 +29,110 @@
       return this.create(options);
     }
 
-    boxes = [];
+    // Initialize global variables
+    var manager = {
+      boxes: [],
+      current: null,
+
+      /**
+       * Returns a new id
+       * @return  int     id
+       */
+      nextId: function()
+      {
+        var id = 1;
+        if (this.boxes.length <= 0)
+          return id;
+        else
+          for (var i in this.boxes)
+            if (this.boxes[i].id > id)
+              id = this.boxes[id].id;
+        return id + 1;
+      },
+
+      /**
+       * Get a box by its id
+       * @param   int     id
+       * @return  Object  The box
+       */
+      getBoxById: function(id)
+      {
+        for (var i in this.boxes)
+          if (this.boxes[i].id == id)
+            return this.boxes[i];
+        return null;
+      },
+
+      /**
+       * Sets the id of the current box
+       * @param   int     id
+       */
+      setCurrent: function(id)
+      {
+        if (this.boxes.length <= 0)
+          this.current = null;
+        var box = this.getBoxById(id);
+        if (box)
+          this.current = box.id;
+        else
+          this.current = this.boxes[this.boxes.length - 1].id;
+      },
+
+      /**
+       * Adds the box to the current set of boxes and adds
+       * its element to the DOM
+       */
+      addBox: function(box)
+      {
+        ContentBox.prototype.created = true;
+        this.boxes.push(box);
+        this.setCurrent(box.id);
+        document.body.appendChild(box.element);
+      },
+
+      /**
+       * Removes a box from the manager and the DOM using its id
+       * @param   int     The box id
+       */
+      removeBox: function(id)
+      {
+        // Loop through all boxes
+        var box = this.getBoxById(id);
+
+        // Remove the box from the DOM
+        box.element.parentNode.removeChild(box.element);
+
+        // Set the new current box
+        this.setCurrent(/*box.parent*/);
+
+        // Remove the box
+        this.boxes.splice(this.boxes.indexOf(box), 1);
+      },
+
+      /**
+       * Find the DOM's highest z-index and return it plus 1
+       * @return  int     Highest z-index plus 1
+       */
+      findZIndex: function()
+      {
+        var highestZ = 100;
+        var elements = document.getElementsByTagName('*');
+        if (!elements.length)
+          return highestZ;
+        for (var i = 0; i < elements.length; ++i)
+        {
+          var z = parseInt(elements[i].style.zIndex);
+          if (z > highestZ)
+            highestZ = z;
+        }
+        return highestZ + 1;
+      }
+    };
+
+    this.getManager = function()
+    {
+      return manager;
+    };
 
     this.undefined = 'undefined';
     this.CLASSES = {
