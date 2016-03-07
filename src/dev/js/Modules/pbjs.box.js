@@ -25,7 +25,7 @@
    */
   pbjs.box = function(options) {
     // Singleton
-    if (boxes.constructor === Array) {
+    if (pbjs.isArray(boxes)) {
       return this.create(options);
     }
 
@@ -411,6 +411,8 @@
     if (typeof this.callbacks.afterCreate === 'function') {
       this.callbacks.afterCreate(box);
     }
+
+    return box;
   };
 
   /**

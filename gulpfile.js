@@ -14,14 +14,14 @@ var paths = {
  
 gulp.task('clean', function () {
 	return gulp.src(['src/compiled/js/**/*.js', 'src/compiled/css/**/*.css'], {read: false})
-		.pipe(clean());
+		.pipe(clean())                            .on('error', swallowError);
 });
 
 // compile mods
 gulp.task('compile-modules', ['clean'], function() {
   return gulp.src('src/dev/js/Modules/**/*.js')
-    .pipe(babel())
-    .pipe(uglify())
+    .pipe(babel())                            .on('error', swallowError)
+    .pipe(uglify())                           .on('error', swallowError)
     .pipe(gulp.dest('src/compiled/js/mods'));
 });
 
@@ -32,8 +32,8 @@ gulp.task('compile-all', ['compile-modules'], function() {
       'src/dev/js/_Constructor/pbjs.core.js',
       'src/dev/js/Modules/*.js'
     ])
-    .pipe(concat("pbjs.js"))
-    .pipe(babel())
+    .pipe(concat("pbjs.js"))                  .on('error', swallowError)
+    .pipe(babel())                            .on('error', swallowError)
     .pipe(gulp.dest('src/compiled/js/'));
 });
 
@@ -44,25 +44,27 @@ gulp.task('minify-js', ['compile-all'], function() {
       'src/dev/js/_Constructor/pbjs.core.js',
       'src/dev/js/Modules/*.js'
     ])
-    .pipe(concat("pbjs.min.js"))
-    .pipe(babel())
-    .pipe(uglify())
+    .pipe(concat("pbjs.min.js"))              .on('error', swallowError)
+    .pipe(babel())                            .on('error', swallowError)
+    .pipe(uglify())                           .on('error', swallowError)
     .pipe(gulp.dest('src/compiled/js/'));
 });
  
-gulp.task('copy-sass', function () {
-	return gulp.src('src/dev/scss/**/*.scss')
-    .pipe(sass())
+gulp.task('copy-sass', ['minify-js'], function () {
+	return gulp.src('src/dev/scss/compiler.scss')
+    .pipe(sass())                             .on('error', swallowError)
+    .pipe(rename("pbjs.css"))                 .on('error', swallowError)
     .pipe(gulp.dest('src/compiled/css/'));
 });
 
-gulp.task('compile-sass', function () {
-  return gulp.src('src/dev/scss/**/*.scss')
-    .pipe(sass({outputStyle: 'compressed'}))
+gulp.task('compile-sass', ['copy-sass'], function () {
+  return gulp.src('src/dev/scss/compiler.scss')
+    .pipe(sass({outputStyle: 'compressed'}))  .on('error', swallowError)
     .pipe(rename({
+      "basename": "pbjs",
       "suffix": ".min"
-    }))
-    .pipe(gulp.dest('src/compiled/css/minified'));
+    }))                                       .on('error', swallowError)
+    .pipe(gulp.dest('src/compiled/css/minified/'));
 });
 
 // Rerun the task when a file changes
@@ -71,8 +73,7 @@ gulp.task('watch', function() {
     paths.js,
     paths.sass
   ], [
-    'compile-all',
-    'copy-sass'
+    'compile-sass'
   ]);
 });
 
@@ -86,3 +87,8 @@ gulp.task('default', [
   'copy-sass',
   'compile-sass'
 ]);
+
+function swallowError (error) {
+  console.log(error.toString());
+  this.emit('end');
+}

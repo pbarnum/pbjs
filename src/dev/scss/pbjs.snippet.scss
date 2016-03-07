@@ -1,0 +1,22 @@
+/**
+ * 
+ */
+
+.pbjs-snippet-table {}
+
+.pbjs-snippet-row {}
+
+.pbjs-snippet-row > td:first-child {
+  border-right: 1px solid $color-lightgray;
+}
+
+.pbjs-snippet-col {
+  padding: 2px 5px;
+  line-height: $font-size;
+  white-space: nowrap;
+}
+
+.pbjs-snippet-comment {
+  color: $snippet-color-comment;
+  font-style: italic;
+}

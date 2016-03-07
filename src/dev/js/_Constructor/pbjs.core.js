@@ -13,6 +13,8 @@
   window.pbjs = function() {};  // Make pbjs a global object
   pbjs.core = function() {};    // Initialize the Core object
   pbjs.undefined = undefined;   // Create a globally common 'undefined'
+  pbjs.NAME = "pbjs";
+  pbjs.VERSION = "0.0.1";
 
   /**
    *  Builds and returns a new pbjsObject id
@@ -24,20 +26,38 @@
     var i = 0;
 
     // If the user's length is within reason, use it!
-    if (parseInt(len) === len && len > 7 && len < 64) {
+    if (parseInt(len) === len && len > 4 && len < 64) {
       length = len;
     }
 
     for (i; i < length; ++i) {
-      str += pepper[parseInt(Math.random(0, pepper.length))];
+      str += pepper[parseInt(Math.random() * pepper.length)];
     }
 
     return str;
   };
 
+  /**
+   * Check the type of an object
+   * @param  obj  The object in question
+   * @param  type The type to check against
+   * @return bool Returns true if types match
+   */
   pbjs.isType = function(obj, type) {
     return Object.prototype.toString.call(obj).slice(8, -1).toLowerCase() === type;
   };
+
+  pbjs.isString = function(obj) {
+    return this.isType(obj, "string");
+  };
+
+  pbjs.isArray = function(obj) {
+    return this.isType(obj, "array");
+  };
+
+  pbjs.isNumber = function(obj) {
+    return /^\d+$/g.test(obj);
+  }
 
   pbjs.isConstructor = function(obj, type) {
     return obj && obj.constructor === type;
@@ -45,6 +65,33 @@
 
   pbjs.isDOMElement = function(element) {
     return element && element.nodeType;
+  };
+
+  pbjs.addClass = function(element, classes, callback) {
+    if (this.isDOMElement(element)) {
+      if (this.isArray(classes)) {
+        classes = classes.split(' ');
+      }
+      else {
+        classes = [];
+      }
+
+      while (classes.length) {
+        var cls = classes.pop();
+        if (!element.classList.contains(cls)) {
+          element.classList.add(new String(cls));
+        }
+      }
+    }
+  };
+
+  pbjs.insertSubString = function(original, substring, position) {
+    if (substring === pbjs.undefined) {
+      return original;
+    } else if (!pbjs.isNumber(position)) {
+      return original + substring;
+    }
+    return [original.slice(0, position), substring, original.slice(position)].join('');
   };
 
   //pbjs.forecasts = function(name, callback, namespace) {
@@ -81,7 +128,7 @@
 
   pbjs.extend = function(original, merging) {
     for (var prop in merging) {
-      if (merging[prop] && merging[prop].constructor && merging[prop].constructor === Object) {
+      if (this.isType(merging[prop], "object")) {
         original[prop] = original[prop] || {};
         arguments.callee(original[prop], merging[prop]);
       }
@@ -142,7 +189,8 @@
    *  Helper function for creating DOM elements
    */
   pbjs.createElement = function (type, properties) {
-    if (type.constructor !== String) {
+    type = type.toString() || this.undefined;
+    if (type === this.undefined) {
       return false;
     }
 
@@ -150,7 +198,7 @@
     var prop;
     if (properties !== undefined) {
       for (prop in properties) {
-        if (properties[prop].constructor === Array) {
+        if (this.isArray(properties[prop])) {
           properties[prop] = properties[prop].join(';');
         }
         element.setAttribute(prop, properties[prop]);
@@ -164,7 +212,7 @@
    *  Helper function for clearing an element's dataset
    */
   pbjs.clearDataset = function (element) {
-    if ((element.constructor && element.dataset.constructor) !== Object) {
+    if (this.isType(element.dataset, "object")) {
       return false;
     }
 

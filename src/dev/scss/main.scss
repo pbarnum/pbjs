@@ -5,37 +5,29 @@
  *  License: NULL
  */
 
-/**
- *  Imports
- */
-@import "../css/reset";
-
-/**
- *  Variables
- */
-$font-family: "Roboto", sans-serif;
-$font-code: "Courier New", Courier, monospace;
-
-$color-white: #ffffff;
-$color-black: #000000;
-$color-lightgray: #cccccc;
-
-$width-container: 1024px;
-
-/**
+/********************************************
  *  Extends
- */
+ ********************************************/
+.center {
+  margin: inherit auto;
+}
+
 .border-radius {
   border-radius: 10px 10px 10px 10px;
   -moz-border-radius: 10px 10px 10px 10px;
   -webkit-border-radius: 10px 10px 10px 10px;
 }
 
+/********************************************
+ * Main theme
+ ********************************************/
+
 html, body {
   height: 100%;
   font-family: $font-family;
-  font-size: 16px;
-  font-weight: 400;
+  font-size: $font-size;
+  font-weight: $font-normal;
+  background-color: $color-background;
 }
 
 h1 {
@@ -49,20 +41,27 @@ h1 {
   }
 }
 
-.mainTable {
-  width: 100%;
+.container {
+  width: $width-container;
+  @extend .center;
+  margin: 40px auto;
+  // background-color: $color-background;
+}
 
-  tbody td {
+.layout-table {
+  width: 100%;
+  margin-bottom: 40px;
+
+  > tbody > tr > td {
     width: 50%;
     padding: 5px 10px 30px 0;
   }
 
-  tbody td:first-child {
-    border-right: 1px solid $color-lightgray;
+  > tbody > tr > td:first-child {
+    border-right: 1px solid $color-gray;
   }
 
-  tbody td:last-child {
-    width: 50%;
+  > tbody > tr > td:last-child {
     padding: 5px 10px;
     border-right: none;
   }
@@ -79,10 +78,10 @@ h1 {
 .optionTable {
   width: 100%;
 
-  tbody td {
+  > tbody > tr > td {
     vertical-align: middle;
     padding: 5px 10px;
-    border: 1px solid $color-lightgray !important;
+    border: 1px solid $color-gray !important;
     border-collapse: collapse;
   }
 }
@@ -128,40 +127,13 @@ div.title {
   }
 }
 
-.content {
-  width: $width-container;
-  margin: 40px auto;
-}
-
 .footer {
   border-top: 1px solid $color-lightgray;
   padding: 10px 0px;
 }
 
-.snippet {
-  background-color: #dddddd;
-}
-
 .code {
   font-family: $font-code;
-
-  .language {
-    background-color: #eeeeee;
-    display: block;
-    padding: 5px 10px;
-    font-size: 20px;
-    font-weight: 800;
-    border-bottom: 2px solid $color-black;
-  }
-
-  .snippet {
-    padding: 5px 10px;
-    cursor: copy;
-    font-size: 14px;
-    line-height: 16px;
-    min-height: 40px;
-    cursor: copy;
-  }
 
   button.runButton {
     cursor: pointer;
@@ -179,4 +151,37 @@ div.title {
     background-color: $color-lightgray;
     color: #cc0000;
   }
+}
+
+.snippet {
+  @extend .code;
+  background-color: $color-lightgray;
+  border: 1px solid $color-gray;
+}
+
+.code-block {
+  @extend .snippet;
+  border-top: none;
+  cursor: copy;
+  padding: 5px 10px;
+  min-height: 40px;
+  line-height: 16px;
+  font-size: 14px;
+}
+
+.code-line {
+  @extend .snippet;
+  padding: 2px 3px;
+}
+
+.code-language {
+  background-color: #eeeeee;
+  display: block;
+  padding: 5px 10px;
+  font-size: 18px;
+  font-weight: 800;
+  color: "red";
+  border-bottom: 2px solid $color-black;
+
+  @import "partials/language/javascript";
 }

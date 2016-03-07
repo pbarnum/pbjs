@@ -32,6 +32,8 @@
   window.pbjs = function () {}; // Make pbjs a global object
   pbjs.core = function () {}; // Initialize the Core object
   pbjs.undefined = undefined; // Create a globally common 'undefined'
+  pbjs.NAME = "pbjs";
+  pbjs.VERSION = "0.0.1";
 
   /**
    *  Builds and returns a new pbjsObject id
@@ -43,19 +45,38 @@
     var i = 0;
 
     // If the user's length is within reason, use it!
-    if (parseInt(len) === len && len > 7 && len < 64) {
+    if (parseInt(len) === len && len > 4 && len < 64) {
       length = len;
     }
 
     for (i; i < length; ++i) {
-      str += pepper[parseInt(Math.random(0, pepper.length))];
+      str += pepper[parseInt(Math.random() * pepper.length)];
     }
 
     return str;
   };
 
+  /**
+   * Check the type of an object
+   * @param  obj  The object in question
+   * @param  type The type to check against
+   * @return bool Returns true if types match
+   */
   pbjs.isType = function (obj, type) {
     return Object.prototype.toString.call(obj).slice(8, -1).toLowerCase() === type;
+  };
+
+  pbjs.isString = function (obj) {
+    return this.isType(obj, "string");
+  };
+
+  pbjs.isArray = function (obj) {
+    return this.isType(obj, "array");
+  };
+
+  pbjs.isNumber = function (obj) {
+    return (/^\d+$/g.test(obj)
+    );
   };
 
   pbjs.isConstructor = function (obj, type) {
@@ -64,6 +85,32 @@
 
   pbjs.isDOMElement = function (element) {
     return element && element.nodeType;
+  };
+
+  pbjs.addClass = function (element, classes, callback) {
+    if (this.isDOMElement(element)) {
+      if (this.isArray(classes)) {
+        classes = classes.split(' ');
+      } else {
+        classes = [];
+      }
+
+      while (classes.length) {
+        var cls = classes.pop();
+        if (!element.classList.contains(cls)) {
+          element.classList.add(new String(cls));
+        }
+      }
+    }
+  };
+
+  pbjs.insertSubString = function (original, substring, position) {
+    if (substring === pbjs.undefined) {
+      return original;
+    } else if (!pbjs.isNumber(position)) {
+      return original + substring;
+    }
+    return [original.slice(0, position), substring, original.slice(position)].join('');
   };
 
   //pbjs.forecasts = function(name, callback, namespace) {
@@ -100,7 +147,7 @@
 
   pbjs.extend = function (original, merging) {
     for (var prop in merging) {
-      if (merging[prop] && merging[prop].constructor && merging[prop].constructor === Object) {
+      if (this.isType(merging[prop], "object")) {
         original[prop] = original[prop] || {};
         arguments.callee(original[prop], merging[prop]);
       } else {
@@ -160,7 +207,8 @@
    *  Helper function for creating DOM elements
    */
   pbjs.createElement = function (type, properties) {
-    if (type.constructor !== String) {
+    type = type.toString() || this.undefined;
+    if (type === this.undefined) {
       return false;
     }
 
@@ -168,7 +216,7 @@
     var prop;
     if (properties !== undefined) {
       for (prop in properties) {
-        if (properties[prop].constructor === Array) {
+        if (this.isArray(properties[prop])) {
           properties[prop] = properties[prop].join(';');
         }
         element.setAttribute(prop, properties[prop]);
@@ -182,7 +230,7 @@
    *  Helper function for clearing an element's dataset
    */
   pbjs.clearDataset = function (element) {
-    if ((element.constructor && element.dataset.constructor) !== Object) {
+    if (this.isType(element.dataset, "object")) {
       return false;
     }
 
@@ -268,11 +316,93 @@ make a xhr class -> html rest class -> form builder
    */
   pbjs.box = function (options) {
     // Singleton
-    if (boxes.constructor === Array) {
+    if (pbjs.isArray(boxes)) {
       return this.create(options);
     }
 
-    boxes = [];
+    // Initialize global variables
+    var manager = {
+      boxes: [],
+      current: null,
+
+      /**
+       * Returns a new id
+       * @return  int     id
+       */
+      nextId: function () {
+        var id = 1;
+        if (this.boxes.length <= 0) return id;else for (var i in this.boxes) if (this.boxes[i].id > id) id = this.boxes[id].id;
+        return id + 1;
+      },
+
+      /**
+       * Get a box by its id
+       * @param   int     id
+       * @return  Object  The box
+       */
+      getBoxById: function (id) {
+        for (var i in this.boxes) if (this.boxes[i].id == id) return this.boxes[i];
+        return null;
+      },
+
+      /**
+       * Sets the id of the current box
+       * @param   int     id
+       */
+      setCurrent: function (id) {
+        if (this.boxes.length <= 0) this.current = null;
+        var box = this.getBoxById(id);
+        if (box) this.current = box.id;else this.current = this.boxes[this.boxes.length - 1].id;
+      },
+
+      /**
+       * Adds the box to the current set of boxes and adds
+       * its element to the DOM
+       */
+      addBox: function (box) {
+        ContentBox.prototype.created = true;
+        this.boxes.push(box);
+        this.setCurrent(box.id);
+        document.body.appendChild(box.element);
+      },
+
+      /**
+       * Removes a box from the manager and the DOM using its id
+       * @param   int     The box id
+       */
+      removeBox: function (id) {
+        // Loop through all boxes
+        var box = this.getBoxById(id);
+
+        // Remove the box from the DOM
+        box.element.parentNode.removeChild(box.element);
+
+        // Set the new current box
+        this.setCurrent();
+
+        // Remove the box
+        /*box.parent*/this.boxes.splice(this.boxes.indexOf(box), 1);
+      },
+
+      /**
+       * Find the DOM's highest z-index and return it plus 1
+       * @return  int     Highest z-index plus 1
+       */
+      findZIndex: function () {
+        var highestZ = 100;
+        var elements = document.getElementsByTagName('*');
+        if (!elements.length) return highestZ;
+        for (var i = 0; i < elements.length; ++i) {
+          var z = parseInt(elements[i].style.zIndex);
+          if (z > highestZ) highestZ = z;
+        }
+        return highestZ + 1;
+      }
+    };
+
+    this.getManager = function () {
+      return manager;
+    };
 
     this.undefined = 'undefined';
     this.CLASSES = {
@@ -545,6 +675,8 @@ make a xhr class -> html rest class -> form builder
     if (typeof this.callbacks.afterCreate === 'function') {
       this.callbacks.afterCreate(box);
     }
+
+    return box;
   };
 
   /**
@@ -691,6 +823,103 @@ make a xhr class -> html rest class -> form builder
 })(window);
 
 /**
+ *  PB&Js | /pbjs.snippet.js
+ *  Author: Patrick Barnum
+ *  Description: Code display.
+ *  License: NULL
+ */
+
+"use strict";
+
+(function (window) {
+
+  var MODULE_NAME = "snippet";
+
+  // Is PBJS a valid object?
+  if (!window || !window.pbjs) {
+    throw new Error("PBJS does not exist!");
+  }
+
+  var CLASSES = {
+    "table": pbjs.NAME + '-' + MODULE_NAME + '-' + 'table',
+    "tableRow": pbjs.NAME + '-' + MODULE_NAME + '-' + 'row',
+    "tableCol": pbjs.NAME + '-' + MODULE_NAME + '-' + 'col',
+    "comment": pbjs.NAME + '-' + MODULE_NAME + '-' + 'comment',
+    "lineNumber": pbjs.NAME + '-' + MODULE_NAME + '-' + 'ln'
+  };
+
+  pbjs.snippet = function (selector, options) {
+    options = _compileOptions(options);
+    var elements = document.querySelectorAll(selector) || [];
+    for (var i = 0; i < elements.length; ++i) {
+      _formatter(elements[i], options);
+    }
+  };
+
+  function _formatter(element, options) {
+    var lines = element.innerHTML.toString().split("\n");
+    var lineNumber = 1;
+    var tbody = pbjs.createElement('table', { 'class': CLASSES.table });
+    var tbody = pbjs.createElement('tbody');
+
+    // Loop through all lines found
+    for (var i = 0; i < lines.length; ++i) {
+      var line = lines[i].trim();
+      var tr = pbjs.createElement('tr', { 'class': CLASSES.tableRow });
+      var elNumber = _buildLineNumber(lineNumber);
+      var elCode = pbjs.createElement('td', { 'class': CLASSES.tableCol });
+
+      // Is line empty?
+      if (line.length <= 0) {
+        continue;
+      }
+
+      // format comments
+      var pos = pbjs.undefined;
+      pos = line.indexOf(options.delimiters.singleComment);
+      if (pos !== pbjs.undefined) {
+        line = pbjs.insertSubString(line, '<span class="' + CLASSES.comment + '">', pos) + '</span>';
+      }
+
+      elCode.innerHTML = line;
+
+      tr.appendChild(elNumber);
+      tr.appendChild(elCode);
+      tbody.appendChild(tr);
+      ++lineNumber;
+    }
+
+    var table = pbjs.createElement('table');
+    table.appendChild(tbody);
+
+    element.innerHTML = "";
+    element.appendChild(table);
+  }
+
+  function _buildLineNumber(number) {
+    var td = pbjs.createElement('td', { 'class': CLASSES.tableCol });
+    var span = pbjs.createElement('span', { 'class': CLASSES.lineNumber });
+    span.innerHTML = number;
+    td.appendChild(span);
+    return td;
+  }
+
+  function _compileOptions(options) {
+    return pbjs.extend({
+      "regex": {
+        "commentLine": /\/\//g,
+        "commentBlock": /(\/\*)(\*\/)/g
+      },
+      "delimiters": {
+        "singleComment": "//",
+        "blockCommentStart": "/*",
+        "blockCommentEnd": "*/"
+      }
+    }, options);
+  }
+})(window);
+
+/**
  *  PB&Js | /pbjs.tips.js
  *  Author: Patrick Barnum
  *  Description: Tooltips for any occasion.
@@ -718,7 +947,7 @@ make a xhr class -> html rest class -> form builder
 "use strict";
 
 /**
- *  @description pbTree's constructor function
+ *  pbTree's constructor function
  *
  *  @param {Object} options User-defined options
  *  @return {Object} this (container element)
@@ -737,38 +966,64 @@ make a xhr class -> html rest class -> form builder
     return pbjs.trees.createTree(id, options);
   }
 
-  // Declare classes
-  var Node;
-
   /**
    *  Class Node
-   *  @description Objects holding information for every Tree item
+   *  Objects holding generic information in a tree structure
    */
-  Node = function (parent, element, label, children) {
+  var Node = function (parent, element, label, children) {
     this.id = pbjs.salt();
     this.parent = this.validateParent(parent);
     this.element = pbjs.undefined;
+    this.label = label || "";
+    this.children = pbjs.undefined;
+    this.opened = false;
+    this.expandable = false;
+    this.isLeaf = false;
+
     if (pbjs.isDOMElement(element)) {
       this.element = element;
     }
 
-    this.label = label;
-
-    this.children = pbjs.undefined;
-    if (pbjs.isConstructor(this.children, Array)) {
+    if (pbjs.isArray(children)) {
       this.children = children;
     }
   };
 
   Node.prototype = {
+    /**
+     *  Is Open
+     *  Checks if this Node is open
+     *  @return {bool}
+     */
+    isOpen: function () {
+      return this.opened;
+    },
+
+    /**
+     *  Set Open
+     *  Sets the Node either opened or closed
+     *  @return null
+     */
+    setOpen: function (open) {
+      this.opened = open;
+    },
+
+    /**
+     *  Is Parent
+     *  Checks if this is a parent Node
+     *  @return {bool}
+     */
+    isParent: function () {
+      return pbjs.isArray(this.children) && this.children.length > 0;
+    },
 
     /**
      *  Validate Parent
-     *  @description  Returns the parent if the constructor is of type Node or pbjs.undefined
+     *  Returns the parent if the constructor is of type Node or pbjs.undefined
      *  @return {Node}  parent
      */
-    "validateParent": function (parent) {
-      if (pbjs.isConstructor(parent, Node)) {
+    validateParent: function (parent) {
+      if (parent instanceof Node) {
         return parent;
       }
       return pbjs.undefined;
@@ -776,35 +1031,26 @@ make a xhr class -> html rest class -> form builder
 
     /**
      *  Get Node Parent
-     *  @description  Returns the parent Node
+     *  Returns the parent Node
      *  @return {Node}  parent
      */
-    "getParent": function () {
+    getParent: function () {
       return this.parent;
     },
 
     /**
      *  Set Node Parent
-     *  @description  Sets the parent Node
+     *  Sets the parent Node
      *  @return null
      */
-    "setParent": function (parent) {
+    setParent: function (parent) {
       this.parent = this.validateParent(parent);
-    },
-
-    /**
-     *  Node has Children
-     *  @description  Checks if the node contains any child Nodes
-     *  @return {boolean} parent
-     */
-    "hasChildren": function () {
-      return pbjs.isConstructor(this.children, Array) && this.children.length > 0;
     },
 
     /**
      *
      */
-    "pushChildNode": function (node) {
+    pushChildNode: function (node) {
       this.children = pbjs.isConstructor(this.children, Array) ? this.children : [];
       this.children.push(node);
     },
@@ -812,7 +1058,7 @@ make a xhr class -> html rest class -> form builder
     /**
      *
      */
-    "popChildNode": function () {
+    popChildNode: function () {
       if (pbjs.isConstructor(this.children, Array) && this.children.length > 0) {
         return this.children.pop();
       }
@@ -823,22 +1069,42 @@ make a xhr class -> html rest class -> form builder
 
   // Declare the Trees object
   pbjs.trees = function (id) {
-    var container = {};
-    if (id && pbjs.trees.hasTree(id)) {
-      return pbjs.trees.getTree(id);
+    if (id && this.hasTree != pbjs.undefined && this.hasTree(id)) {
+      return this.getTree(id);
     }
 
-    // Trees start with 0 nodes
-    pbjs.trees.length = 0;
+    // Array of trees
+    this.forest = [];
+    this._isValid = function () {
+      return pbjs.isType(this.forest, "array");
+    };
+
+    return this;
   };
 
   /**
    *  Get all Trees
-   *  @description  Checks if the node contains any child Nodes
+   *  Checks if the node contains any child Nodes
    *  @return {Boolean} parent
    */
   pbjs.trees.prototype.getAllTrees = function () {
     return pbjs.trees.container;
+  };
+
+  pbjs.trees.prototype.getTree = function (treeId) {
+    var self = this;
+    return function () {
+      if (!pbjs.isArray(self.forest)) {
+        return false;
+      }
+
+      var i = 0;
+      for (i; i < self.forest.length; ++i) {
+        if (self.forest[++i] && self.forest[i].id == treeId) {
+          return this.forest[i];
+        }
+      }
+    };
   };
 
   /**
@@ -847,135 +1113,521 @@ make a xhr class -> html rest class -> form builder
    *  @return {bool}
    */
   pbjs.trees.prototype.isTree = function (id) {
-    return pbjs.isConstructor(pbjs.trees.leaves[id], pbjs.trees.tree);
+    return pbjs.trees.forest[id] instanceof pbjs.trees.tree;
   };
 
   /**
    *  New Tree object
-   *  @description   Creates a new Tree object, adding to the "Forest"
+   *  Creates a new Tree object, adding to the "Forest"
    *  @param  {String}  id  The id of a DOM element
    *  @param  {Object}  options  The new Tree's options
    */
-  pbjs.trees.prototype.createTree = pbjs.trees.tree = function (id, options) {
-
-    this.container = document.getElementById(id);
-
+  pbjs.trees.prototype.createTree = pbjs.trees.tree = function (elementId, options) {
     // Id must be present, and is found in the DOM, so we know where to build
+    this.container = document.getElementById(elementId);
     if (!pbjs.isDOMElement(this.container)) {
-      pbjs.error(MODULE_NAME, "Could not initiate a new Tree object with the given Id", id);
+      pbjs.error(MODULE_NAME, "Could not initiate a new Tree object with the given element Id", elementId);
     }
 
-    this.id = id;
-    this.root = {};
+    var self = this;
 
-    // Define DOM classes
-    this.IDs = {
-      "ID": {
-        "TOOLTIP": "pbjs-tooltip",
-        "HIGHLIGHTER": "pbjs-highlighter",
-        "SELECTED": "pbjs-tree-selected",
-        "SEARCH": "pbjs-tree-search",
-        "EXPANDCOLLAPSE": "pbjs-tree-expandcollapse"
-      }
-      //,
-      //"CLASSES": {
-      //
-      //}
-    };
+    /****************************************************************
+     *                      Private Methods                         *
+     ****************************************************************/
+    /**
+     * function searchTree ()
+     *
+     * Search function using Regex (search via node id AND node link text)
+     */
+    var searchTree = function () {
+      var numOfResults, totalCount;
 
-    // Build the Node system for the Tree object
-    _growTree();
+      this.root.find('a').closest('li').each(function () {
+        searchArray.push($(this).clone());
+      });
 
-    // Define all Tree extras
-    this.extras = _getTreeExtras();
+      totalCount = searchArray.length;
 
-    // Hide the tree until told otherwise
-    //this.root.attr('id','pbTree-root').hide();
-    _brandAll();
+      $(options.search.selector).keyup(function (e) {
+        // Shift code
+        if (e.which === 16) {
+          return false;
+        }
 
-    // Add click listeners to each link
-    this.root.find('a').each(function () {
-      $(this).click(function () {
-        if ($('a.pbTree-current').length > 0) $('a.pbTree-current').removeClass('pbTree-current').removeAttr('style');
+        // Maybe without the \b boundary \b ???
+        //var regStr;
+        //if(String.fromCharCode(e.which) == '.')
+        //{
+        //    regStr = '^(?=.*?\\b(?:'+ this.value + '\\' + String.fromCharCode(e.which);
+        //}
+        //else
+        //{
+        //    regStr = '^(?=.*?\\b(?:'+ this.value + String.fromCharCode(e.which);
+        //}
+        //
+        //// Slice off the capital letter of value entered and add the end boundary
+        //regStr = regStr.slice(0, -1);
+        //regStr = regStr +')+\\b)';
+        //
+        //// Replace any instance of a space with a new regex word boundary
+        //regStr = regStr.replace(' ', ')+\\b)(?=.*?\\b(?:');
 
-        if (options.showoccupied.enable) $(this).css(options.showoccupied.style);
+        var regStr;
+        if (String.fromCharCode(e.which) == '.') {
+          regStr = this.value + '\\' + String.fromCharCode(e.which);
+        } else {
+          regStr = this.value + String.fromCharCode(e.which);
+        }
 
-        $(this).addClass('pbTree-current');
-        if (options.select.enable) {
-          this._objects.selected.show().css(_setSelTop());
+        var regex = new RegExp(regStr.slice(0, -1), 'ig');
+        var $results = [];
+        numOfResults = 0;
+
+        $.each(searchArray, function () {
+          var id = $(this).attr('id'),
+              $link = $(this).find('a');
+
+          if (id !== pbjs.undefined && id.match(regex) || $link.length > 0 && $link.text().match(regex)) {
+            $results.push($(this));
+            ++numOfResults;
+          }
+        });
+
+        // If user provides a callback, return the results and how many
+        if (options.search.callback && typeof options.search.callback === 'function') {
+          options.search.callback($results, numOfResults, totalCount);
         }
       });
-    });
+    };
+
+    /**
+     * function _showAll ()
+     *
+     * Open all of the nodes and show all of the lists.
+     */
+    var _showAll = function (node) {
+      if (!(node instanceof Node) || !node.children) {
+        return;
+      }
+    };
+
+    /**
+     * function _hideAll ()
+     *
+     * Close all of the nodes and hide all of the lists (except for root).
+     */
+    var _hideAll = function () {
+      this.root.find('li.pbTree-subRoot').removeClass('pbTree-opened').addClass('pbTree-closed');
+      this.root.find('ul').hide();
+    };
+
+    /**
+     * function _ecButtons ()
+     *
+     * Define and add listeners to the expand/collapse links
+     */
+    var _ecButtons = function () {
+      var obj = {};
+      obj.container = pbjs.trees.tree._objects.expandCollapse;
+
+      // The container must make room for the expand/collapse element
+      this.container.style.paddingBottom = obj.container.style.offsetHeight;
+
+      obj.expand = pbjs.createElement("a", {
+        "class": "pbjs-tree-expand"
+      });
+      obj.collapse = pbjs.createElement("a", {
+        "class": "pbjs-tree-collapse"
+      });
+
+      obj.expand.addEventListener("click", function () {
+        pbjs.trees.tree.showAllNodes();
+        return false; // disable default 'a' tag action
+      });
+
+      obj.collapse.addEventListener("click", function () {
+        pbjs.trees.tree.hideAllNodes();
+        return false; // disable default 'a' tag action
+      });
+
+      //obj.expand.addEventListener("click", function() {
+      //  _showAll();
+      //
+      //  if (pbjs.trees.options.select.enable && pbjs.tree.) {
+      //    this._objects.selected.show().css(_setSelTop());
+      //  }
+      //
+      //  return false;
+      //});
+
+      //var $collapseAll = this._objects.expandCollapse.find('.pbTree-collapseAll')
+      //.click(function() {
+      //  _hideAll();
+      //  nodes.root.animate({scrollTop: 0}, 10);
+      //
+      //  // Position the links back into frame
+      //  this._objects.expandCollapse.css('bottom', 0);
+      //
+      //  if (options.select.enable) {
+      //    this._objects.selected.hide();
+      //  }
+      //
+      //  return false;
+      //});
+
+      obj.container.appendChild(obj.expand);
+      obj.container.appendChild(obj.collapse);
+      return obj;
+    };
+
+    /**
+     * function _setState( object $this )
+     *
+     * Switch between opened and closed classes
+     * @param {Object} $this
+     */
+    var _setState = function ($this) {
+      $this.each(function () {
+        $(this).toggleClass('pbTree-opened').toggleClass('pbTree-closed');
+
+        if ($(this).hasClass('pbTree-opened')) {
+          $(this).find('ul:first').show();
+        } else {
+          $(this).find('ul:first').hide();
+        }
+      });
+    };
+
+    /**
+     * function _setSelTop ()
+     * Set the top of the selected div to the top of the clicked node.
+     *
+     * @return {Object} The top position of the selected node.
+     */
+    var _setSelTop = function () {
+      // If the node is already selected (searched for), highlight it
+      if ($('a.pbTree-current').length > 0 && this.root.is(':visible')) {
+        return {
+          top: parseInt($('a.pbTree-current').position().top + this.root.position().top + nodes.root.scrollTop()),
+          width: nodes.root[0].scrollWidth
+        };
+      }
+      // Otherwise highlight the clicked node
+      else {
+          return {
+            top: parseInt($('a.pbTree-current').position().top + nodes.root.scrollTop()),
+            width: nodes.root[0].scrollWidth,
+            display: 'none'
+          };
+        }
+    };
+
+    /**
+     * _setDefaults ( options )
+     *
+     * Define and extend all default settings.
+     *
+     * @param {Object} options
+     * @return {Object} options
+     */
+    var _setDefaults = function (options) {
+      return pbjs.extend(options, {
+        // "Expand/Collapse" all nodes
+        "ecButtons": {
+          "enable": true
+          //showDefault: {
+          //    show: true,
+          //    class: pbjs.undefined
+          //},
+          //selector: pbjs.undefined
+        },
+
+        // Add a hover indicator
+        "hover": {
+          "enable": true
+        },
+
+        // Search box defaults
+        "search": {
+          "enable": false,
+          "selector": pbjs.undefined,
+          "callback": pbjs.undefined
+        },
+
+        // Add a selected indicator
+        "select": {
+          "enable": true
+        },
+
+        // Hide all nodes from the start
+        "showall": false,
+
+        // Indicate that the node has a child
+        "showoccupied": {
+          "enable": true,
+          "style": {
+            "fontWeight": "bold",
+            "color": "#000000"
+          }
+        },
+
+        // Add a tooltip to hover above the mouse
+        "tooltip": {
+          "enable": true,
+          "offsetX": 10,
+          "offsetY": 10
+        }
+      });
+    };
+
+    /**
+     *  Grow the Tree Recursively
+     *  Helper method for {@link #_growTree}
+     *  @param Node parentNode Parent of the new Node object
+     */
+    var _growTreeRecursive = function (parentNode) {
+      var parentNodeChildren = pbjs.undefined;
+      var elementChildNodes;
+      var node;
+      var ul;
+      var li;
+      var i;
+      var j;
+      // get text node...
+      if (parentNode instanceof Node && pbjs.isDOMElement(parentNode.element) && parentNode.element.children.length > 0) {
+        // Loop through each LI element
+        elementChildNodes = parentNode.element.children;
+        for (i = 0; i < elementChildNodes.length; ++i) {
+          node = new Node(parentNode, elementChildNodes[i]);
+          li = elementChildNodes[i];
+          ul = pbjs.undefined;
+
+          // if(!$(this).children().is('a')) {
+          //   $(this).addClass('pbTree-subRoot');
+
+          //   if (!options._showAll) {
+          //     $(this).children('ul').hide();
+          //     $(this).addClass('pbTree-closed');
+          //   }
+          //   else {
+          //     $(this).addClass('pbTree-opened');
+          //   }
+          // }
+
+          // Loop through LI's children
+          for (j = 0; j < li.children.length; ++j) {
+            if (li.children[j].tagName == "SPAN") {
+              node.label = li.children[j];
+            } else if (li.children[j].tagName == "UL") {
+              var childNode = _growTreeRecursive(new Node(node, li.children[j]));
+              node.pushChildNode(childNode.children);
+            } else if (li.children[j].tagName == 'A') {
+              node.isLeaf = true;
+            }
+          }
+
+          // Finally, add the node to the parent's children
+          parentNode.pushChildNode(node);
+        }
+      }
+
+      return parentNode;
+    };
+
+    /**
+     *  Grow the Tree
+     *  Breaks down the children DOM Elements provided by this.container
+     */
+    var _growTree = function (container) {
+      var rootLevelNodes = container && container.children ? container.children : [];
+      var i;
+      for (i = 0; i < rootLevelNodes.length; ++i) {
+        if (rootLevelNodes[i].tagName == "UL") {
+          return _growTreeRecursive(new Node(pbjs.undefined, rootLevelNodes[i]));
+        }
+      }
+
+      return new Node();
+    };
+
+    /**
+     *  Grow the Tree Extras
+     *  Creates and prepares the Tree's extra functionality
+     *  @return Object The container object for all extras
+     */
+    var _getTreeExtras = function (options) {
+      var _objects = {};
+
+      // if (options) {
+      //   if (options.tooltip.enabled) {
+      //     if (pbjs.isModuleLoaded("tooltip")) {
+      //       _objects.tooltip = pbjs.getModule(this.IDs.IDS.TOOLTIP);
+      //     } else {
+      //       _objects.tooltip = document.getElementById(this.IDs.IDS.TOOLTIP) || pbjs.createElement("div", {
+      //         "id": this.IDs.IDS.TOOLTIP
+      //       });
+      //     }
+      //   } else {
+      //     _objects.tooltip = pbjs.undefined;
+      //   }
+
+      //   if (options.highlighter.enabled) {
+      //     if (pbjs.isModuleLoaded("highlighter")) {
+      //       _objects.highlighter = pbjs.getModule(this.IDs.IDS.HIGHLIGHTER);
+      //     } else {
+      //       _objects.highlighter = document.getElementById(this.IDs.IDS.HIGHLIGHTER) || pbjs.createElement("div", {
+      //         "id": this.IDs.IDS.HIGHLIGHTER
+      //       });
+      //     }
+      //   } else {
+      //     _objects.highlighter = pbjs.undefined;
+      //   }
+
+      //   if (options.selected.enabled) {
+      //     _objects.selected = document.getElementById(this.IDs.IDS.SELECTED) || pbjs.createElement("div", {
+      //       "id": this.IDs.IDS.SELECTED
+      //     });
+      //   } else {
+      //     _objects.selected = pbjs.undefined;
+      //   }
+
+      //   if (options.expandCollapse.enabled) {
+      //     _objects.expandCollapse = document.getElementById(this.IDs.IDS.EXPANDCOLLAPSE) || pbjs.createElement("div", {
+      //       "id": this.IDs.IDS.EXPANDCOLLAPSE
+      //     });
+      //   } else {
+      //     _objects.expandCollapse = pbjs.undefined;
+      //   }
+
+      //   if (options.search.enabled) {
+      //     if (pbjs.isModuleLoaded("search")) {
+      //       _objects.search = pbjs.getModule(this.IDs.IDS.SEARCH);
+      //     } else {
+      //       _objects.search = document.getElementById(this.IDs.IDS.SEARCH) || pbjs.createElement("input", {
+      //         "id": this.IDs.IDS.SEARCH,
+      //         "type": "text",
+      //         "placeholder": "Search..."
+      //       });
+
+      //       // Find out if the user has a search input or if we need to create one
+      //       if (pbjs.isConstructor(options.search.selector, String) && parseInt(options.search.selector.length) > 0) {
+      //         _extrasSearchTree();
+      //       }
+      //     }
+      //   } else {
+      //     _objects.search = pbjs.undefined;
+      //   }
+      // }
+
+      return _objects;
+    };
+    /****************************************************************
+     *                     /Private Methods                         *
+     ****************************************************************/
+
+    // Build the Node system for the Tree object
+    this.root = _growTree(this.container);
+    console.log(this.root);
+
+    // Define all Tree extras
+    this.options = _getTreeExtras(this.options);
+
+    // Open node when requested
+    if (options.showoccupied.enable) {
+      _showAll();
+    }
+
+    // Add click listeners to each link
+    // this.root.find('a').each(function()
+    // {
+    //   $(this).click(function()
+    //   {
+    //     if($('a.pbTree-current').length > 0)
+    //     $('a.pbTree-current').removeClass('pbTree-current').removeAttr('style');
+
+    //     if(options.showoccupied.enable)
+    //     $(this).css(options.showoccupied.style);
+
+    //     $(this).addClass('pbTree-current');
+    //     if(options.select.enable)
+    //     {
+    //       this._objects.selected.show().css(_setSelTop());
+    //     }
+    //   });
+    // });
 
     // User clicks on a node
-    this.root.click(function (e) {
-      if (this.root.has(e.target).length > 0 && $(e.target).hasClass('pbTree-subRoot') || e.target) {
-        var eNode = $(e.target);
-        if (eNode.hasClass('pbTree-opened')) {
-          _setState(eNode);
+    // this.root.click(function(e) {
+    //   if ((this.root.has(e.target).length > 0 && $(e.target).hasClass('pbTree-subRoot')) || e.target) {
+    //     var eNode = $(e.target);
+    //     if(eNode.hasClass('pbTree-opened')) {
+    //       _setState(eNode);
 
-          if (options.select.enable && eNode.find('a.pbTree-current').length > 0) this._objects.selected.hide();
-        } else {
-          _setState(eNode);
+    //       if(options.select.enable && eNode.find('a.pbTree-current').length > 0)
+    //       this._objects.selected.hide();
+    //     }
+    //     else {
+    //       _setState(eNode);
 
-          if (options.select.enable && eNode.find('a.pbTree-current').length > 0 && eNode.find('li.pbTree-closed').length <= 0) {
-            this._objects.selected.css(_setSelTop()).show();
-          }
-        }
-      }
-    })
+    //       if(options.select.enable && eNode.find('a.pbTree-current').length > 0 && eNode.find('li.pbTree-closed').length <= 0) {
+    //         this._objects.selected.css(_setSelTop()).show();
+    //       }
+    //     }
+    //   }
+    // })
 
-    // User moused-over a node
-    .mousemove(function (e) {
-      if (options.hover.enable && this.root.has(e.target).length > 0 && ($(e.target).is('li') || $(e.target).is('a'))) {
-        this._objects.highlighter.show().css({
-          top: $(e.target).position().top + this.root.position().top + nodes.root.scrollTop(),
-          width: nodes.root[0].scrollWidth
-        });
+    // // User moused-over a node
+    // .mousemove(function(e) {
+    //   if (options.hover.enable && this.root.has(e.target).length > 0 && ($(e.target).is('li') || $(e.target).is('a'))) {
+    //     this._objects.highlighter.show().css({
+    //       top: $(e.target).position().top + this.root.position().top + nodes.root.scrollTop(),
+    //       width: nodes.root[0].scrollWidth
+    //     });
 
-        // Add the tool tip if enabled
-        if (options.tooltip.enable) {
-          var tex = $(e.target).text().split('\n')[0];
-          this._objects.tooltip.text(tex).css({
-            top: e.clientY + $(window).scrollTop() - options.tooltip.offsetY - this._objects.tooltip.outerHeight() + 'px',
-            left: e.clientX - options.tooltip.offsetX + 'px'
-          }).show();
-        }
-      }
-    })
+    //     // Add the tool tip if enabled
+    //     if (options.tooltip.enable) {
+    //       var tex = $(e.target).text().split('\n')[0];
+    //       this._objects.tooltip.text(tex).css({
+    //         top: e.clientY + $(window).scrollTop() - options.tooltip.offsetY - this._objects.tooltip.outerHeight() + 'px',
+    //         left: e.clientX - options.tooltip.offsetX + 'px'
+    //       }).show();
+    //     }
+    //   }
+    // })
 
-    // User left the node
-    .mouseleave(function () {
-      if (options.hover.enable && options.tooltip.enable) {
-        this._objects.highlighter.hide();
-        this._objects.tooltip.hide();
-      }
-    });
+    // // User left the node
+    // .mouseleave(function() {
+    //   if (options.hover.enable && options.tooltip.enable) {
+    //     this._objects.highlighter.hide();
+    //     this._objects.tooltip.hide();
+    //   }
+    // });
 
-    // User is scrolling through the container
-    nodes.root.scroll(function () {
-      // Only show the selected div if the path is opened
-      if (options.select.enable && $('a.pbTree-current').length > 0 && $('a.pbTree-current').parents('li.pbTree-closed').length <= 0) {
-        this._objects.selected.css(_setSelTop()).show();
-      }
+    // // User is scrolling through the container
+    // nodes.root.scroll(function() {
+    //   // Only show the selected div if the path is opened
+    //   if (options.select.enable && $('a.pbTree-current').length > 0 && $('a.pbTree-current').parents('li.pbTree-closed').length <= 0) {
+    //     this._objects.selected.css(_setSelTop()).show();
+    //   }
 
-      if (options.ecButtons.enable) {
-        this._objects.expandCollapse.css({
-          bottom: -nodes.root.scrollTop(),
-          left: nodes.root.scrollLeft()
-        });
-      }
-    });
+    //   if (options.ecButtons.enable) {
+    //     this._objects.expandCollapse.css({
+    //       bottom: -(nodes.root.scrollTop()),
+    //       left: nodes.root.scrollLeft()
+    //     });
+    //   }
+    // });
 
-    this.root.show();
+    // this.root.show();
 
+    // pbjs.trees.addTree(this);
     return this;
   };
 
   /**
    * $.fn.pbTree.findOne ( string id, bool hide )
    *
-   * @description Select a specific node based its id
+   * Select a specific node based its id
    *
    * @param {String} id
    * @param {Boolean} hide
@@ -1015,120 +1667,8 @@ make a xhr class -> html rest class -> form builder
   };
 
   /**
-   * function searchTree ()
-   *
-   * @description Search function using Regex (search via node id AND node link text)
-   */
-  function searchTree() {
-    var numOfResults, totalCount;
-
-    this.root.find('a').closest('li').each(function () {
-      searchArray.push($(this).clone());
-    });
-
-    totalCount = searchArray.length;
-
-    $(options.search.selector).keyup(function (e) {
-      // Shift code
-      if (e.which === 16) {
-        return false;
-      }
-
-      // Maybe without the \b boundary \b ???
-      //var regStr;
-      //if(String.fromCharCode(e.which) == '.')
-      //{
-      //    regStr = '^(?=.*?\\b(?:'+ this.value + '\\' + String.fromCharCode(e.which);
-      //}
-      //else
-      //{
-      //    regStr = '^(?=.*?\\b(?:'+ this.value + String.fromCharCode(e.which);
-      //}
-      //
-      //// Slice off the capital letter of value entered and add the end boundary
-      //regStr = regStr.slice(0, -1);
-      //regStr = regStr +')+\\b)';
-      //
-      //// Replace any instance of a space with a new regex word boundary
-      //regStr = regStr.replace(' ', ')+\\b)(?=.*?\\b(?:');
-
-      var regStr;
-      if (String.fromCharCode(e.which) == '.') {
-        regStr = this.value + '\\' + String.fromCharCode(e.which);
-      } else {
-        regStr = this.value + String.fromCharCode(e.which);
-      }
-
-      var regex = new RegExp(regStr.slice(0, -1), 'ig');
-      var $results = [];
-      numOfResults = 0;
-
-      $.each(searchArray, function () {
-        var id = $(this).attr('id'),
-            $link = $(this).find('a');
-
-        if (id !== pbjs.undefined && id.match(regex) || $link.length > 0 && $link.text().match(regex)) {
-          $results.push($(this));
-          ++numOfResults;
-        }
-      });
-
-      // If user provides a callback, return the results and how many
-      if (options.search.callback && typeof options.search.callback === 'function') {
-        options.search.callback($results, numOfResults, totalCount);
-      }
-    });
-  }
-
-  /**
-   * function _showAll ()
-   *
-   * @description Open all of the nodes and show all of the lists.
-   */
-  function _showAll() {
-    this.root.find('li.pbTree-subRoot').removeClass('pbTree-closed').addClass('pbTree-opened');
-    this.root.find('ul').show();
-  }
-
-  /**
-   * function _hideAll ()
-   *
-   * @description Close all of the nodes and hide all of the lists (except for root).
-   */
-  function _hideAll() {
-    this.root.find('li.pbTree-subRoot').removeClass('pbTree-opened').addClass('pbTree-closed');
-    this.root.find('ul').hide();
-  }
-
-  /**
-   * function _brandAll ()
-   *
-   * @description Add appropriate classes to all nodes (initialization).
-   */
-  function _brandAll() {
-    this.root.find('li').each(function () {
-      if (!$(this).children().is('a')) {
-        $(this).addClass('pbTree-subRoot');
-
-        if (!options._showAll) {
-          $(this).children('ul').hide();
-          $(this).addClass('pbTree-closed');
-        } else {
-          $(this).addClass('pbTree-opened');
-        }
-      }
-    });
-
-    if (options.showoccupied.enable) {
-      this.root.find('li:has(a)').each(function () {
-        $(this).css(options.showoccupied.style);
-      });
-    }
-  }
-
-  /**
    *  Show All Nodes
-   *  @description Opens all nodes and their children
+   *  Opens all nodes and their children
    *  @return {int} The number of nodes affected
    */
   pbjs.trees.tree.prototype.showAllNodes = function () {
@@ -1144,283 +1684,6 @@ make a xhr class -> html rest class -> form builder
       this._objects.selected.setPosition();
     }
   };
-
-  /**
-   * function _ecButtons ()
-   *
-   * @description Define and add listeners to the expand/collapse links
-   */
-  function _ecButtons() {
-    var obj = {};
-    obj.container = pbjs.trees.tree._objects.expandCollapse;
-
-    // The container must make room for the expand/collapse element
-    this.container.style.paddingBottom = obj.container.style.offsetHeight;
-
-    obj.expand = pbjs.createElement("a", {
-      "class": "pbjs-tree-expand"
-    });
-    obj.collapse = pbjs.createElement("a", {
-      "class": "pbjs-tree-collapse"
-    });
-
-    obj.expand.addEventListener("click", function () {
-      pbjs.trees.tree.showAllNodes();
-      return false; // disable default 'a' tag action
-    });
-
-    obj.collapse.addEventListener("click", function () {
-      pbjs.trees.tree.hideAllNodes();
-      return false; // disable default 'a' tag action
-    });
-
-    //obj.expand.addEventListener("click", function() {
-    //  _showAll();
-    //
-    //  if (pbjs.trees.options.select.enable && pbjs.tree.) {
-    //    this._objects.selected.show().css(_setSelTop());
-    //  }
-    //
-    //  return false;
-    //});
-
-    //var $collapseAll = this._objects.expandCollapse.find('.pbTree-collapseAll')
-    //.click(function() {
-    //  _hideAll();
-    //  nodes.root.animate({scrollTop: 0}, 10);
-    //
-    //  // Position the links back into frame
-    //  this._objects.expandCollapse.css('bottom', 0);
-    //
-    //  if (options.select.enable) {
-    //    this._objects.selected.hide();
-    //  }
-    //
-    //  return false;
-    //});
-
-    obj.container.appendChild(obj.expand);
-    obj.container.appendChild(obj.collapse);
-    return obj;
-  }
-
-  /**
-   * function _setState( object $this )
-   *
-   * @description Switch between opened and closed classes
-   * @param {Object} $this
-   */
-  function _setState($this) {
-    $this.each(function () {
-      $(this).toggleClass('pbTree-opened').toggleClass('pbTree-closed');
-
-      if ($(this).hasClass('pbTree-opened')) {
-        $(this).find('ul:first').show();
-      } else {
-        $(this).find('ul:first').hide();
-      }
-    });
-  }
-
-  /**
-   * function _setSelTop ()
-   * Set the top of the selected div to the top of the clicked node.
-   *
-   * @return {Object} The top position of the selected node.
-   */
-  function _setSelTop() {
-    // If the node is already selected (searched for), highlight it
-    if ($('a.pbTree-current').length > 0 && this.root.is(':visible')) {
-      return {
-        top: parseInt($('a.pbTree-current').position().top + this.root.position().top + nodes.root.scrollTop()),
-        width: nodes.root[0].scrollWidth
-      };
-    }
-    // Otherwise highlight the clicked node
-    else {
-        return {
-          top: parseInt($('a.pbTree-current').position().top + nodes.root.scrollTop()),
-          width: nodes.root[0].scrollWidth,
-          display: 'none'
-        };
-      }
-  }
-
-  /**
-   * _setDefaults ( options )
-   *
-   * @description Define and extend all default settings.
-   *
-   * @param {Object} options
-   * @return {Object} options
-   */
-  function _setDefaults(options) {
-    return pbjs.extend(options, {
-      // "Expand/Collapse" all nodes
-      "ecButtons": {
-        "enable": true
-        //showDefault: {
-        //    show: true,
-        //    class: pbjs.undefined
-        //},
-        //selector: pbjs.undefined
-      },
-
-      // Add a hover indicator
-      "hover": {
-        "enable": true
-      },
-
-      // Search box defaults
-      "search": {
-        "enable": false,
-        "selector": pbjs.undefined,
-        "callback": pbjs.undefined
-      },
-
-      // Add a selected indicator
-      "select": {
-        "enable": true
-      },
-
-      // Hide all nodes from the start
-      "showall": false,
-
-      // Indicate that the node has a child
-      "showoccupied": {
-        "enable": true,
-        "style": {
-          "fontWeight": "bold",
-          "color": "#000000"
-        }
-      },
-
-      // Add a tooltip to hover above the mouse
-      "tooltip": {
-        "enable": true,
-        "offsetX": 10,
-        "offsetY": 10
-      }
-    });
-  }
-
-  /**
-   *  Grow the Tree Recursively
-   *  Helper method for {@link #_growTree}
-   *  @param Node parentNode Parent of the new Node object
-   */
-  function _growTreeRecursive(parentNode) {
-    var parentNodeChildren = pbjs.undefined;
-    var elementChildNodes;
-    var node;
-    var i;
-    // get text node...
-    if (pbjs.isConstructor(parentNode, Node) && parentNode.element.childNodes.length > 0) {
-      elementChildNodes = parentNode.element.childNodes;
-      for (i = 0; i < elementChildNodes.length; ++i) {
-        node = new Node(parentNode, elementChildNodes[i], pbjs.undefined);
-
-        // We're at the top of a list? Run it again!
-        if (node.element.tagName === "ul") {
-          _growTreeRecursive(node);
-        }
-
-        // Finally, add the node to the parent's children
-        parentNode.addChild(node);
-      }
-    }
-  }
-
-  /**
-   *  Grow the Tree
-   *  Breaks down the children DOM Elements provided by this.container
-   */
-  function _growTree() {
-    this.root.element = pbjs.undefined;
-    var rootLevelNodes = this.container.childNodes;
-    var i;
-    for (i = 0; i < rootLevelNodes.length; ++i) {
-      if (rootLevelNodes[i].tagName == "ul") {
-        this.root.element = rootLevelNodes[i];
-        break;
-      }
-    }
-    if (this.root.element === pbjs.undefined) {
-      return false;
-    }
-
-    _growTreeRecursive(this.root);
-  };
-
-  /**
-   *  Grow the Tree Extras
-   *  Creates and prepares the Tree's extra functionality
-   *  @return Object The container object for all extras
-   */
-  function _getTreeExtras() {
-    var _objects = {};
-
-    if (this.options.tooltip.enabled) {
-      if (pbjs.isModuleLoaded("tooltip")) {
-        _objects.tooltip = pbjs.getModule(this.IDs.IDS.TOOLTIP);
-      } else {
-        _objects.tooltip = document.getElementById(this.IDs.IDS.TOOLTIP) || pbjs.createElement("div", {
-          "id": this.IDs.IDS.TOOLTIP
-        });
-      }
-    } else {
-      _objects.tooltip = pbjs.undefined;
-    }
-
-    if (this.options.highlighter.enabled) {
-      if (pbjs.isModuleLoaded("highlighter")) {
-        _objects.highlighter = pbjs.getModule(this.IDs.IDS.HIGHLIGHTER);
-      } else {
-        _objects.highlighter = document.getElementById(this.IDs.IDS.HIGHLIGHTER) || pbjs.createElement("div", {
-          "id": this.IDs.IDS.HIGHLIGHTER
-        });
-      }
-    } else {
-      _objects.highlighter = pbjs.undefined;
-    }
-
-    if (this.options.selected.enabled) {
-      _objects.selected = document.getElementById(this.IDs.IDS.SELECTED) || pbjs.createElement("div", {
-        "id": this.IDs.IDS.SELECTED
-      });
-    } else {
-      _objects.selected = pbjs.undefined;
-    }
-
-    if (this.options.expandCollapse.enabled) {
-      _objects.expandCollapse = document.getElementById(this.IDs.IDS.EXPANDCOLLAPSE) || pbjs.createElement("div", {
-        "id": this.IDs.IDS.EXPANDCOLLAPSE
-      });
-    } else {
-      _objects.expandCollapse = pbjs.undefined;
-    }
-
-    if (this.options.search.enabled) {
-      if (pbjs.isModuleLoaded("search")) {
-        _objects.search = pbjs.getModule(this.IDs.IDS.SEARCH);
-      } else {
-        _objects.search = document.getElementById(this.IDs.IDS.SEARCH) || pbjs.createElement("input", {
-          "id": this.IDs.IDS.SEARCH,
-          "type": "text",
-          "placeholder": "Search..."
-        });
-
-        // Find out if the user has a search input or if we need to create one
-        if (pbjs.isConstructor(options.search.selector, String) && parseInt(options.search.selector.length) > 0) {
-          _extrasSearchTree();
-        }
-      }
-    } else {
-      _objects.search = pbjs.undefined;
-    }
-
-    return _objects;
-  }
 
   /**
    *  PB&Js Router Stuff

@@ -1,0 +1,31 @@
+// variables
+
+/**
+ *  Variables
+ */
+// $font-hack: "Hack";
+$font-ubuntu: "Ubuntu+Mono";
+
+$font-family: "Roboto", sans-serif;
+$font-code: $font-ubuntu, "Courier New", Courier, monospace;
+$font-lightest: 200;
+$font-light: 300;
+$font-normal: 400;
+$font-heavy: 600;
+$font-heaviest: 800;
+$font-size: 16px; 
+
+$color-white: #ffffff;
+$color-black: #000000;
+$color-lightgray: #dddddd;
+$color-gray: #777777;
+$color-background: #c0c9d1;
+
+$width-container: 1024px;
+
+/**
+ * Module variables
+ */
+
+// snippet
+$snippet-color-comment: #399050;
